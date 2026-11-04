@@ -1,0 +1,1124 @@
+﻿<Window x:Class="Bronkers.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Bronkers"
+        xmlns:core="clr-namespace:Bronkers.Core"
+        mc:Ignorable="d"
+        Title="Bronkers" Height="759" Width="1296" MinHeight="400" MinWidth="640"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized"
+        Background="{DynamicResource FeltBrush}">
+    <Window.Resources>
+        <SolidColorBrush x:Key="FeltBrush" Color="#1F5C43"/>
+        <SolidColorBrush x:Key="FeltEdgeBrush" Color="#143D2D"/>
+        <SolidColorBrush x:Key="OnFeltBrush" Color="#E9F1EA"/>
+        <SolidColorBrush x:Key="OnFeltMutedBrush" Color="#A9C4B3"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#F2C14E"/>
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="#F7D27A"/>
+        <SolidColorBrush x:Key="OnAccentBrush" Color="#2A2108"/>
+        <SolidColorBrush x:Key="CardFaceBrush" Color="#FBF8F1"/>
+        <SolidColorBrush x:Key="CardEdgeBrush" Color="#D6CFC0"/>
+        <SolidColorBrush x:Key="CardBlackBrush" Color="#1E2329"/>
+        <SolidColorBrush x:Key="CardRedBrush" Color="#C22F35"/>
+        <SolidColorBrush x:Key="CardBackBrush" Color="#7A2230"/>
+        <SolidColorBrush x:Key="NoteBrush" Color="#FBF1BE"/>
+        <SolidColorBrush x:Key="NoteHoverBrush" Color="#F6E08C"/>
+        <SolidColorBrush x:Key="NoteSelectedBrush" Color="#F2C14E"/>
+        <SolidColorBrush x:Key="NoteRuleBrush" Color="#BDAF74"/>
+        <SolidColorBrush x:Key="PencilBrush" Color="#33302A"/>
+
+        <!-- Value 1 is the Ace; 11 to 13 are the court cards (see Card.DisplayStr). -->
+        <Style x:Key="RankText" TargetType="TextBlock">
+            <Setter Property="Text" Value="{Binding Value}"/>
+            <Setter Property="FontFamily" Value="Georgia"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Value}" Value="1">
+                    <Setter Property="Text" Value="A"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Value}" Value="11">
+                    <Setter Property="Text" Value="J"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Value}" Value="12">
+                    <Setter Property="Text" Value="Q"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Value}" Value="13">
+                    <Setter Property="Text" Value="K"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SuitText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI Symbol"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding suit}" Value="Hearts">
+                    <Setter Property="Text" Value="&#x2665;"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding suit}" Value="Diamonds">
+                    <Setter Property="Text" Value="&#x2666;"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding suit}" Value="Spades">
+                    <Setter Property="Text" Value="&#x2660;"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding suit}" Value="Clubs">
+                    <Setter Property="Text" Value="&#x2663;"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CardFace" TargetType="Border">
+            <Setter Property="Width" Value="124"/>
+            <Setter Property="Height" Value="176"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Background" Value="{StaticResource CardFaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource CardEdgeBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="TextElement.Foreground" Value="{StaticResource CardBlackBrush}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding suit}" Value="Hearts">
+                    <Setter Property="TextElement.Foreground" Value="{StaticResource CardRedBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding suit}" Value="Diamonds">
+                    <Setter Property="TextElement.Foreground" Value="{StaticResource CardRedBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="CardTemplate" DataType="{x:Type core:Card}">
+            <Border Style="{StaticResource CardFace}">
+                <Grid>
+                    <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,8,0,0">
+                        <TextBlock Style="{StaticResource RankText}"/>
+                        <TextBlock Style="{StaticResource SuitText}"/>
+                    </StackPanel>
+
+                    <TextBlock Style="{StaticResource SuitText}" FontSize="54"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                    <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,8"
+                                RenderTransformOrigin="0.5,0.5">
+                        <StackPanel.RenderTransform>
+                            <RotateTransform Angle="180"/>
+                        </StackPanel.RenderTransform>
+                        <TextBlock Style="{StaticResource RankText}"/>
+                        <TextBlock Style="{StaticResource SuitText}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Hover, selection and arrival each own a transform, so the movements add up cleanly.
+             The right margin sets the overlap; HandList's ItemsPresenter margin must offset it. -->
+        <Style x:Key="CardSlot" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,-78,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <TransformGroup>
+                                    <TranslateTransform/>
+                                    <TranslateTransform/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </Grid.RenderTransform>
+                            <Grid.Effect>
+                                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270"
+                                                  Opacity="0.22" Color="Black"/>
+                            </Grid.Effect>
+                            <ContentPresenter/>
+                            <Border x:Name="SelectionRing" CornerRadius="10" BorderThickness="3"
+                                    BorderBrush="{StaticResource AccentBrush}" Visibility="Collapsed"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <!-- Always true, so this runs once per card. Loaded would replay on every reorder. -->
+                            <Trigger Property="Focusable" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             From="0" To="1" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="Root"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[2].(TranslateTransform.Y)"
+                                                             From="-36" To="0" Duration="0:0:0.24">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)"
+                                                             To="-8" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)"
+                                                             To="0" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="SelectionRing" Property="Visibility" Value="Visible"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(TranslateTransform.Y)"
+                                                             To="-28" Duration="0:0:0.14"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Root"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(TranslateTransform.Y)"
+                                                             To="0" Duration="0:0:0.14"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HandList" TargetType="ListBox">
+            <Setter Property="SelectionMode" Value="Multiple"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="ItemTemplate" Value="{StaticResource CardTemplate}"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource CardSlot}"/>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <local:FanPanel/>
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter Margin="0,40,78,12"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="CardBackTemplate">
+            <Border Width="124" Height="176" CornerRadius="10" Padding="8"
+                    Background="{StaticResource CardFaceBrush}"
+                    BorderBrush="{StaticResource CardEdgeBrush}" BorderThickness="1">
+                <Border CornerRadius="6" Background="{StaticResource CardBackBrush}">
+                    <TextBlock Text="B" FontFamily="Georgia" FontSize="44" FontWeight="Bold"
+                               Foreground="{StaticResource CardFaceBrush}" Opacity="0.85"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </Border>
+        </DataTemplate>
+
+        <!-- A card landing on the pile settles from slightly larger; it only runs for new cards. -->
+        <DataTemplate x:Key="DiscardedCardTemplate" DataType="{x:Type core:Card}">
+            <ContentPresenter x:Name="Landing" Content="{Binding}" RenderTransformOrigin="0.5,0.5"
+                              ContentTemplate="{StaticResource CardTemplate}">
+                <ContentPresenter.RenderTransform>
+                    <ScaleTransform/>
+                </ContentPresenter.RenderTransform>
+                <ContentPresenter.Triggers>
+                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                 From="0" To="1" Duration="0:0:0.16"/>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                 From="1.18" To="1" Duration="0:0:0.24">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                 From="1.18" To="1" Duration="0:0:0.24">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </ContentPresenter.Triggers>
+            </ContentPresenter>
+        </DataTemplate>
+
+        <!-- The deck and discard pile are the pickup controls: the ring shows they are live. -->
+        <Style x:Key="PickupSource" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="IsEnabled" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="Transparent">
+                            <ContentPresenter/>
+                            <Border x:Name="PickupRing" CornerRadius="10" BorderThickness="3"
+                                    BorderBrush="{StaticResource AccentBrush}" Visibility="Collapsed"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="True">
+                                <Setter TargetName="PickupRing" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="PickupRing" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}"/>
+                                <Setter TargetName="PickupRing" Property="BorderThickness" Value="5"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="PickupRing" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}"/>
+                                <Setter TargetName="PickupRing" Property="BorderThickness" Value="5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer}" Value="0"/>
+                        <Condition Binding="{Binding Phase}" Value="WaitForPickup"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="IsEnabled" Value="True"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DiscardPileSource" TargetType="Button" BasedOn="{StaticResource PickupSource}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding discardPile.Count}" Value="0">
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="TableLabel" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+            <Setter Property="Foreground" Value="{StaticResource OnFeltMutedBrush}"/>
+        </Style>
+
+        <Style x:Key="PromptText" TargetType="TextBlock">
+            <Setter Property="Text" Value="Opponent's turn"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource OnFeltMutedBrush}"/>
+            <Style.Triggers>
+                <!-- Opponent wording first: the player 0 triggers below override it. -->
+                <DataTrigger Binding="{Binding Phase}" Value="WaitForPickup">
+                    <Setter Property="Text" Value="Opponent is picking up..."/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Phase}" Value="PlayerActions">
+                    <Setter Property="Text" Value="Opponent is taking their actions..."/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Phase}" Value="SelectDiscard">
+                    <Setter Property="Text" Value="Opponent is discarding..."/>
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer}" Value="0"/>
+                        <Condition Binding="{Binding Phase}" Value="WaitForPickup"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Text" Value="Pick up from the deck or discard pile"/>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer}" Value="0"/>
+                        <Condition Binding="{Binding Phase}" Value="PlayerActions"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Text" Value="Place cards in your goal, or finish your actions"/>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer}" Value="0"/>
+                        <Condition Binding="{Binding Phase}" Value="PlayerActions"/>
+                        <Condition Binding="{Binding players[0].CanLayDown}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Text" Value="Your goal is ready to lay down"/>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer}" Value="0"/>
+                        <Condition Binding="{Binding Phase}" Value="SelectDiscard"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Text" Value="Select one card to discard"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}"/>
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="36,10"/>
+            <Setter Property="Visibility" Value="Hidden"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Face" CornerRadius="8" Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="{StaticResource AccentHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Face" Property="Background" Value="{StaticResource FeltEdgeBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource OnFeltMutedBrush}"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FinishActionsButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer}" Value="0"/>
+                        <Condition Binding="{Binding Phase}" Value="PlayerActions"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DiscardButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="IsEnabled" Value="False"/>
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer}" Value="0"/>
+                        <Condition Binding="{Binding Phase}" Value="SelectDiscard"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding SelectedItems.Count, ElementName=HandList}" Value="1">
+                    <Setter Property="IsEnabled" Value="True"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="LayDownButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Visibility" Value="Visible"/>
+            <Setter Property="IsEnabled" Value="False"/>
+            <Setter Property="Padding" Value="20,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer}" Value="0"/>
+                        <Condition Binding="{Binding Phase}" Value="PlayerActions"/>
+                        <Condition Binding="{Binding players[0].CanLayDown}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="IsEnabled" Value="True"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- One square on the goal sheet. Goals come in pairs worth the same points, so the
+             first of each pair carries the row's points and the panel wraps after the second. -->
+        <Style x:Key="GoalSheetCell" TargetType="ComboBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="PointsCell" Width="44" Height="48" BorderThickness="0,0,1,1"
+                                    BorderBrush="{StaticResource NoteRuleBrush}">
+                                <TextBlock Text="{Binding points}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontFamily="Segoe Print" FontSize="16"
+                                           Foreground="{StaticResource PencilBrush}"/>
+                            </Border>
+                            <Border x:Name="GoalCell" Width="112" Height="48" Background="Transparent"
+                                    BorderThickness="0,0,1,1" BorderBrush="{StaticResource NoteRuleBrush}">
+                                <Grid>
+                                    <TextBlock Text="{Binding name}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontFamily="Segoe Print" FontSize="15"
+                                               Foreground="{StaticResource PencilBrush}"/>
+                                    <Path x:Name="CompletedCircle" Margin="8,4" Stretch="Fill" Visibility="Collapsed"
+                                          Stroke="{StaticResource PencilBrush}" StrokeThickness="1.5"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M8,30 C2,10 40,0 70,2 C100,4 118,16 116,30 C114,46 80,54 50,52 C20,50 2,38 10,22 C12,18 18,14 26,10"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                <Setter TargetName="PointsCell" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="GoalCell" Property="Background" Value="{StaticResource NoteHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="GoalCell" Property="Background" Value="{StaticResource NoteSelectedBrush}"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding completed}" Value="True">
+                                <Setter TargetName="CompletedCircle" Property="Visibility" Value="Visible"/>
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GoalSheetTab" TargetType="ToggleButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Face" CornerRadius="3" Background="{StaticResource NoteBrush}"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="{StaticResource NoteHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="{StaticResource NoteHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Still a ComboBox so GoalPicker's selection and binding are unchanged; its dropdown is the sticky note. -->
+        <Style x:Key="GoalSheet" TargetType="ComboBox">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="AlternationCount" Value="2"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource GoalSheetCell}"/>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Width="268"/>
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Style="{StaticResource GoalSheetTab}" ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"/>
+                            <Grid Margin="12,0" IsHitTestVisible="False">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center" FontFamily="Segoe Print" FontSize="14"
+                                           Foreground="{StaticResource PencilBrush}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="{Binding SelectedItem.name, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}}" Value="{x:Null}">
+                                                    <Setter Property="Text" Value="Choose a goal"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="10,0"
+                                           FontFamily="Segoe Print" FontSize="14"
+                                           Foreground="{StaticResource PencilBrush}"
+                                           Text="{Binding SelectedItem.points, RelativeSource={RelativeSource TemplatedParent}, StringFormat='+{0}', FallbackValue=''}"/>
+                                <Path Grid.Column="2" VerticalAlignment="Center" Data="M0,0 L5,5 L10,0"
+                                      Stroke="{StaticResource PencilBrush}" StrokeThickness="1.5"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                            <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom" VerticalOffset="4"
+                                   PopupAnimation="Fade" Focusable="False"
+                                   IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Border Margin="0,0,10,10" Padding="8,8,7,0" CornerRadius="2"
+                                        Background="{StaticResource NoteBrush}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.4"/>
+                                    </Border.Effect>
+                                    <ItemsPresenter/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HelpToggle" TargetType="ToggleButton">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="{StaticResource PencilBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Face" CornerRadius="14" Background="{StaticResource NoteBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="{StaticResource NoteHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HelpBackdrop" TargetType="ToggleButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="#99000000"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HelpAction" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,0,20,10"/>
+            <Setter Property="Foreground" Value="{StaticResource PencilBrush}"/>
+        </Style>
+
+        <Style x:Key="HelpDetail" TargetType="TextBlock">
+            <Setter Property="Grid.Column" Value="1"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Foreground" Value="{StaticResource PencilBrush}"/>
+        </Style>
+
+        <!-- Live only during the human player's actions. Formations sit in item templates,
+             so they read the turn state from the window rather than their DataContext. -->
+        <Style x:Key="SlotButton" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="IsEnabled" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="Transparent">
+                            <ContentPresenter/>
+                            <Border x:Name="FormationRing" CornerRadius="6" BorderThickness="2" Margin="-3"
+                                    BorderBrush="{StaticResource AccentBrush}" Visibility="Collapsed"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="True">
+                                <Setter TargetName="FormationRing" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="FormationRing" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}"/>
+                                <Setter TargetName="FormationRing" Property="BorderThickness" Value="3"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="FormationRing" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}"/>
+                                <Setter TargetName="FormationRing" Property="BorderThickness" Value="3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding ActivePlayer, RelativeSource={RelativeSource AncestorType=Window}}" Value="0"/>
+                        <Condition Binding="{Binding Phase, RelativeSource={RelativeSource AncestorType=Window}}" Value="PlayerActions"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="IsEnabled" Value="True"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- A player can only add to the table once they have laid down themselves. -->
+        <Style x:Key="TableFormationButton" TargetType="Button" BasedOn="{StaticResource SlotButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding players[0].LaidDown, RelativeSource={RelativeSource AncestorType=Window}}" Value="0">
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="FormationCardSlot" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Margin" Value="0,0,-72,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid x:Name="Root">
+                            <Grid.RenderTransform>
+                                <TranslateTransform/>
+                            </Grid.RenderTransform>
+                            <ContentPresenter/>
+                            <Border x:Name="SelectionRing" CornerRadius="10" BorderThickness="5"
+                                    BorderBrush="{StaticResource AccentBrush}" Visibility="Collapsed"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="SelectionRing" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="Root" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="-12"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Visibility x:Key="ReturnButtonIdle">Collapsed</Visibility>
+
+        <Style x:Key="ReturnButton" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="44"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Margin" Value="0,5,0,0"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="ToolTip" Value="Return to hand"/>
+            <Setter Property="AutomationProperties.Name" Value="Return selected cards to hand"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Face" CornerRadius="6" Background="{StaticResource AccentBrush}">
+                            <Path Data="M6,1 V12 M1,7.5 L6,12.5 L11,7.5" Stroke="{StaticResource OnAccentBrush}"
+                                  StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="{StaticResource AccentHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="{StaticResource AccentHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Half-size cards. The overlap here is offset by the list's own right margin.
+             The dotted slot is the formation's button: it starts the formation when empty and adds to it after.
+             ReturnButtonIdle lets the player's own slots hold the return button's space so they don't jump. -->
+        <DataTemplate x:Key="FormationBody" DataType="{x:Type core:Formation}">
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Margin" Value="0,0,36,2"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding cards.Count}" Value="0">
+                                <Setter Property="Margin" Value="0,0,20,2"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <StackPanel Orientation="Horizontal">
+                    <ListBox x:Name="FormationCards" ItemsSource="{Binding cards}" Margin="0,0,42,0"
+                             SelectionMode="Multiple" Background="Transparent" BorderThickness="0"
+                             IsEnabled="{Binding IsEnabled, ElementName=AddSlot}"
+                             ItemTemplate="{StaticResource CardTemplate}"
+                             ItemContainerStyle="{StaticResource FormationCardSlot}">
+                        <ListBox.Style>
+                            <Style TargetType="ListBox">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding cards.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.Style>
+                        <ListBox.LayoutTransform>
+                            <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
+                        </ListBox.LayoutTransform>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.Template>
+                            <ControlTemplate TargetType="ListBox">
+                                <ItemsPresenter/>
+                            </ControlTemplate>
+                        </ListBox.Template>
+                    </ListBox>
+                    <Button x:Name="AddSlot" Style="{DynamicResource FormationButton}" VerticalAlignment="Center"
+                            Tag="{Binding Tag, RelativeSource={RelativeSource AncestorType=ContentControl}}"
+                            AutomationProperties.Name="{Binding Tag, RelativeSource={RelativeSource Self}}">
+                        <Grid>
+                            <Rectangle RadiusX="6" RadiusY="6"
+                                       Stroke="{StaticResource OnFeltMutedBrush}" StrokeThickness="2"
+                                       StrokeDashArray="4 3">
+                                <Rectangle.Style>
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Width" Value="36"/>
+                                        <Setter Property="Height" Value="52"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding cards.Count}" Value="0">
+                                                <Setter Property="Width" Value="62"/>
+                                                <Setter Property="Height" Value="88"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Rectangle.Style>
+                            </Rectangle>
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       TextAlignment="Center" FontFamily="Segoe UI"
+                                       Foreground="{StaticResource OnFeltMutedBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="+"/>
+                                        <Setter Property="FontSize" Value="20"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding cards.Count}" Value="0">
+                                                <Setter Property="Text" Value="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                                <Setter Property="FontSize" Value="12"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+                <Button x:Name="ReturnToHandButton">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ReturnButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding players[0].LaidDown, RelativeSource={RelativeSource AncestorType=Window}}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding players[0].LaidDown, RelativeSource={RelativeSource AncestorType=Window}}" Value="0"/>
+                                        <Condition Binding="{Binding SelectedItems.Count, ElementName=FormationCards}" Value="0"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="{DynamicResource ReturnButtonIdle}"/>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding players[0].LaidDown, RelativeSource={RelativeSource AncestorType=Window}}" Value="0"/>
+                                        <Condition Binding="{Binding IsEnabled, ElementName=AddSlot}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="{DynamicResource ReturnButtonIdle}"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- FormationButton is a DynamicResource so the slots and the table can each supply their own rules. -->
+        <DataTemplate DataType="{x:Type core:Set}">
+            <ContentControl Content="{Binding}" Tag="Set&#x0a;3+ cards" Focusable="False"
+                            ContentTemplate="{StaticResource FormationBody}"/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type core:Run}">
+            <ContentControl Content="{Binding}" Tag="Run&#x0a;4+ cards" Focusable="False"
+                            ContentTemplate="{StaticResource FormationBody}"/>
+        </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="FormationRow">
+            <WrapPanel/>
+        </ItemsPanelTemplate>
+
+        <!-- One row per player who has laid down, so any player count works. -->
+        <DataTemplate x:Key="PlayerTableRow" DataType="{x:Type core:Player}">
+            <StackPanel Margin="0,0,0,2">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding LaidDown}" Value="0">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <TextBlock Margin="0,0,0,8" FontFamily="Segoe UI" FontSize="13"
+                           Text="{Binding (ItemsControl.AlternationIndex), RelativeSource={RelativeSource TemplatedParent}, StringFormat='Player {0}'}"
+                           Foreground="{StaticResource OnFeltMutedBrush}"/>
+                <ItemsControl ItemsSource="{Binding Goal.formations}" Focusable="False"
+                              ItemsPanel="{StaticResource FormationRow}">
+                    <ItemsControl.Resources>
+                        <Style x:Key="FormationButton" TargetType="Button" BasedOn="{StaticResource TableFormationButton}"/>
+                    </ItemsControl.Resources>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <!-- The game is laid out at a fixed 1280x720 and scaled as a whole, so it keeps its shape at any
+         window size. Any spare window space is the same felt, so it doesn't show as a border. -->
+    <Grid>
+    <Viewbox Stretch="Uniform">
+    <Grid Width="1280" Height="720" Background="{StaticResource FeltBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1.3*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Bronkers" Margin="24,18,24,0"
+                   FontFamily="Georgia" FontSize="22" FontWeight="Bold"
+                   Foreground="{StaticResource OnFeltBrush}"/>
+
+        <!-- Flashes on each change, which is the only sign of an opponent's deck pickup. -->
+        <TextBlock Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="24,18,64,0"
+                   Text="{Binding players[1].hand.cards.Count, NotifyOnTargetUpdated=True, StringFormat='Opponent: {0} cards'}"
+                   FontFamily="Segoe UI" FontSize="14"
+                   Foreground="{StaticResource OnFeltBrush}">
+            <TextBlock.Triggers>
+                <EventTrigger RoutedEvent="Binding.TargetUpdated">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                             From="0.2" To="1" Duration="0:0:0.4"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </TextBlock.Triggers>
+        </TextBlock>
+
+        <ToggleButton x:Name="HelpButton" Grid.Row="0" Content="?" Margin="0,18,24,0"
+                      HorizontalAlignment="Right" VerticalAlignment="Center"
+                      Style="{StaticResource HelpToggle}" ToolTip="Controls"
+                      AutomationProperties.Name="Controls"/>
+
+        <Viewbox Grid.Row="1" Stretch="Uniform" StretchDirection="DownOnly" Margin="24,8,0,0"
+                 HorizontalAlignment="Left" VerticalAlignment="Top" Width="270">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Margin="0,0,24,0">
+                    <Button x:Name="PickupDeckButton" Style="{StaticResource PickupSource}"
+                            AutomationProperties.Name="Pick up from deck">
+                        <ContentPresenter ContentTemplate="{StaticResource CardBackTemplate}"/>
+                    </Button>
+                    <TextBlock Text="{Binding Deck.Count, StringFormat='Deck: {0} left', FallbackValue='Deck'}"
+                               Style="{StaticResource TableLabel}"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <Button x:Name="PickupDiscardButton" Style="{StaticResource DiscardPileSource}"
+                            AutomationProperties.Name="Pick up from discard pile">
+                        <Grid>
+                            <Rectangle Width="124" Height="176" RadiusX="10" RadiusY="10"
+                                       Stroke="{StaticResource OnFeltMutedBrush}" StrokeThickness="2"
+                                       StrokeDashArray="4 3">
+                                <Rectangle.Style>
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding discardPile.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Rectangle.Style>
+                            </Rectangle>
+                            <!-- Items stack in one cell, so the newest discard is the card on top. -->
+                            <ItemsControl ItemsSource="{Binding discardPile}" Focusable="False"
+                                          ItemTemplate="{StaticResource DiscardedCardTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Grid/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </Grid>
+                    </Button>
+                    <TextBlock Text="Discard pile" Style="{StaticResource TableLabel}"/>
+                </StackPanel>
+            </StackPanel>
+        </Viewbox>
+
+        <ScrollViewer x:Name="TableScroll" Grid.Row="1" Margin="316,4,24,0" Focusable="False"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="TableArea" Margin="4">
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding players[0].LaidDown}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Goal" VerticalAlignment="Center" Margin="0,0,10,0"
+                                   FontFamily="Segoe UI" FontSize="14"
+                                   Foreground="{StaticResource OnFeltBrush}"/>
+                        <ComboBox x:Name="GoalPicker" Width="190" Style="{StaticResource GoalSheet}"
+                                  ItemsSource="{Binding players[0].goals}"
+                                  SelectedItem="{Binding players[0].Goal}"
+                                  AutomationProperties.Name="Goal"/>
+                        <Button x:Name="LayDownButton" Content="Lay down" Margin="12,0,0,0"
+                                Style="{StaticResource LayDownButtonStyle}"/>
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding players[0].Goal.formations}" Focusable="False"
+                                  ItemsPanel="{StaticResource FormationRow}">
+                        <ItemsControl.Resources>
+                            <Style x:Key="FormationButton" TargetType="Button" BasedOn="{StaticResource SlotButton}"/>
+                            <Visibility x:Key="ReturnButtonIdle">Hidden</Visibility>
+                        </ItemsControl.Resources>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- AlternationCount numbers the rows, which gives each one its player index. -->
+                <ItemsControl ItemsSource="{Binding players}" Focusable="False"
+                              AlternationCount="{Binding players.Length}"
+                              ItemTemplate="{StaticResource PlayerTableRow}"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Viewbox Grid.Row="2" Stretch="Uniform" StretchDirection="DownOnly" Margin="16,0">
+            <ListBox x:Name="HandList" Style="{StaticResource HandList}"
+                     ItemsSource="{Binding players[0].hand.cards}"/>
+        </Viewbox>
+
+        <StackPanel Grid.Row="3" HorizontalAlignment="Center" Margin="24,0,24,28">
+            <TextBlock Style="{StaticResource PromptText}"/>
+            <TextBlock Text="{Binding StatusMessage}" HorizontalAlignment="Center" Margin="0,-6,0,10"
+                       FontFamily="Segoe UI" FontSize="14" Foreground="{StaticResource AccentBrush}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding StatusMessage}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding StatusMessage}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <Grid>
+                <Button x:Name="FinishActionsButton" Content="Finish actions" HorizontalAlignment="Center"
+                        Style="{StaticResource FinishActionsButtonStyle}"/>
+                <Button x:Name="DiscardButton" Content="Discard" HorizontalAlignment="Center"
+                        Style="{StaticResource DiscardButtonStyle}"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+    </Viewbox>
+
+        <!-- Sits over the whole game and blocks it. Clicking outside the note closes it. -->
+        <Grid>
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsChecked, ElementName=HelpButton}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <ToggleButton Style="{StaticResource HelpBackdrop}" AutomationProperties.Name="Close controls"
+                          IsChecked="{Binding IsChecked, ElementName=HelpButton, Mode=TwoWay}"/>
+            <Viewbox Stretch="Uniform">
+            <Grid Width="1280" Height="720">
+            <Border Width="600" Padding="28,20,28,16" CornerRadius="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{StaticResource NoteBrush}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.45"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <TextBlock Text="Controls" FontFamily="Segoe Print" FontSize="22"
+                                   Foreground="{StaticResource PencilBrush}"/>
+                        <ToggleButton x:Name="HelpCloseButton" Content="&#x2715;" FontSize="12" HorizontalAlignment="Right"
+                                      VerticalAlignment="Center" Style="{StaticResource HelpToggle}"
+                                      AutomationProperties.Name="Close controls"
+                                      IsChecked="{Binding IsChecked, ElementName=HelpButton, Mode=TwoWay}"/>
+                    </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Pick up" Style="{StaticResource HelpAction}"/>
+                        <TextBlock Grid.Row="0" Text="Click the deck or the discard pile." Style="{StaticResource HelpDetail}"/>
+                        <TextBlock Grid.Row="1" Text="Select cards" Style="{StaticResource HelpAction}"/>
+                        <TextBlock Grid.Row="1" Text="Click cards in your hand. The arrow keys move selected cards." Style="{StaticResource HelpDetail}"/>
+                        <TextBlock Grid.Row="2" Text="Choose a goal" Style="{StaticResource HelpAction}"/>
+                        <TextBlock Grid.Row="2" Text="Click the yellow note." Style="{StaticResource HelpDetail}"/>
+                        <TextBlock Grid.Row="3" Text="Place cards" Style="{StaticResource HelpAction}"/>
+                        <TextBlock Grid.Row="3" Text="Select cards, then click a dotted slot." Style="{StaticResource HelpDetail}"/>
+                        <TextBlock Grid.Row="4" Text="Take cards back" Style="{StaticResource HelpAction}"/>
+                        <TextBlock Grid.Row="4" Text="Click cards in a slot, then the gold arrow." Style="{StaticResource HelpDetail}"/>
+                        <TextBlock Grid.Row="5" Text="Lay down" Style="{StaticResource HelpAction}"/>
+                        <TextBlock Grid.Row="5" Text="Click Lay down when every slot is filled." Style="{StaticResource HelpDetail}"/>
+                        <TextBlock Grid.Row="6" Text="Add cards" Style="{StaticResource HelpAction}"/>
+                        <TextBlock Grid.Row="6" Text="Select cards, then click the + beside a set or run." Style="{StaticResource HelpDetail}"/>
+                        <TextBlock Grid.Row="7" Text="End your turn" Style="{StaticResource HelpAction}"/>
+                        <TextBlock Grid.Row="7" Text="Click Finish actions, select a card, then click Discard." Style="{StaticResource HelpDetail}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            </Grid>
+            </Viewbox>
+        </Grid>
+    </Grid>
+</Window>
