@@ -79,7 +79,7 @@ await delay(WAIT)
 
 // 3. Actions
 if player.laidDown == 0:
-    // 3a. Shelve formations into the goal (invisible to the human; only the hand count drops)
+    // 3a. Shelve formations into the goal (invisible to the human; the internal hand shrinks but the header stays at 13)
     do:
         shelved = false
         ranked = [...getCardScores(player).entries()]
@@ -187,8 +187,12 @@ return null
 
 ## 4. Human-visible signals of AI activity
 
-- The header "Opponent: N cards" updates (and flashes) on every hand-count change. That covers pickup
-  (+1), shelving (−3/−4 each), table adds, swapped wilds coming back (+1), discard (−1) and new deals.
+- **WEB ADDITION (2026-11-06):** the header stays at "Opponent: 13 cards" until
+  the AI commits to laying down. Pickup, shelving and discard do not change or
+  flash that header while its goal is uncommitted. On laydown it reveals the
+  actual hand count; subsequent visible count changes update and flash normally.
+  A new round resets the display to 13. Internal hand counts and AI decisions are
+  unchanged.
 - The discard pile changes on pickup-from-discard and on discard.
 - The deck count changes on deck pickup.
 - AI formations appear on the table (as a "Player 1" row) only once it lays down.

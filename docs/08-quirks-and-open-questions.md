@@ -14,7 +14,7 @@ Part B changes one.
 | A5 | Table rows read **"Player 0"** (human) and **"Player 1"** (AI), 0-based. | `04` §2 |
 | A6 | The goal picker works **at any time** before laying down: during the AI's turn and during SelectDiscard. Changing goal pulls placed cards back into the hand. | `05` §4.6 |
 | A7 | Hand selection and arrow-key reordering work at any time, including the AI's turn and under the help overlay. | `05` §3 |
-| A8 | The AI's goal slots fill invisibly before it lays down. Only the "Opponent: N cards" count drops. | `03` §2 |
+| A8 | The AI's goal slots fill invisibly before it lays down. **Updated 2026-11-06:** the header also stays at "Opponent: 13 cards" until laydown, concealing progress. | `03` §2 |
 | A9 | A laid-down AI adds to **every** laid-down formation, including the human's, and may swap out the human's wilds into its own hand. | `03` §2 |
 | A10 | Adding a matching natural to a set that holds a wild **always** swaps the leftmost wild out to the adder's hand. | `02` §3.2 |
 | A11 | An all-wild set accepts **any** natural as its first natural. An all-wild run accepts a natural of **any suit**. | `02` §3, `07` SA4/RA14 |

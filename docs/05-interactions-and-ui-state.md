@@ -122,7 +122,9 @@ still fires. Optional for the web build (harmless either way).
 
 ## 5. AI turn and the UI
 `processAITurn` runs asynchronously (`03`). The UI must re-render after **each** AI step so the human sees:
-phase prompt changes, deck count, discard top, "Opponent: N cards" flashes, and table rows appearing.
+phase prompt changes, deck count, discard top, and table rows appearing. The
+opponent count stays at 13 until laydown, then updates and flashes on visible
+count changes (WEB ADDITION, 2026-11-06).
 Don't batch the whole AI turn into one render.
 
 ## 6. Reactivity notes from the original bindings

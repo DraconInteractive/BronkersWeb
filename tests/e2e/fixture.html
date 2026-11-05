@@ -27,6 +27,12 @@ if (new URLSearchParams(location.search).has('round-ai')) {
  }
  game.activePlayer=1;
 }
+if (new URLSearchParams(location.search).has('opponent-count')) {
+ const ai=game.players[1];
+ ai.goal=ai.goals[new URLSearchParams(location.search).has('incomplete') ? 1 : 0];
+ ai.hand=cards('5H 5S 5D 8H 8S 8D KH QC JS 10D 9H 7S 6C');
+ game.deck.cards=cards('3C');game.discardPile=cards('4D');game.activePlayer=1;
+}
 mountApp(document.querySelector('#app'),game);
-if (new URLSearchParams(location.search).has('round-ai')) void game.processAITurn();
+if (['round-ai','opponent-count'].some(key=>new URLSearchParams(location.search).has(key))) void game.processAITurn();
 </script></body></html>

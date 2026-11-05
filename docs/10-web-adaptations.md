@@ -28,6 +28,12 @@ the original behavior.
 - **Accessibility:** named buttons, pressed selection states, visible focus,
   modal focus handling and a live turn prompt supplement the original controls.
   Reduced-motion CSS minimizes arrival and selection transitions.
+- **Opponent count (approved 2026-11-06):** the header shows "Opponent: 13 cards"
+  throughout the opponent's uncommitted goal, including pickup, shelving and
+  discard. It does not flash on concealed changes. Committing to laydown reveals
+  the actual hand count, which then updates normally. Each new round resets the
+  header to 13. This changes only the header presentation; the AI still uses its
+  actual hand internally, and round results still report actual cards remaining.
 - **Blocked opponent adds:** clicking or tapping an opponent's formation or its
   + before laying down explains: "Lay down your goal before adding cards to your
   opponent's formations." The explanation replaces the normal prompt in gold,

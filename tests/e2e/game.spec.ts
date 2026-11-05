@@ -203,6 +203,7 @@ test('AI round results show laydowns, close help and wait for confirmation',asyn
    await expect(result).toBeVisible({timeout:10000});
    await expect(page.getByRole('dialog',{name:'Controls'})).toBeHidden();
    await expect(result.locator('.round-winner')).toHaveText('Your opponent won the round.');
+   await expect(page.locator('.opponent')).toHaveText('Opponent: 0 cards');
    const rows=result.locator('tbody tr');
    await expect(rows.first().locator('td').first()).toContainText(both ? 'Yes' : 'No');
    await expect(rows.last().locator('td').first()).toContainText('Yes');
@@ -221,6 +222,7 @@ test('AI round results show laydowns, close help and wait for confirmation',asyn
    await expect(result).toBeHidden();
    await expect(page.locator('.hand-card')).toHaveCount(13);
    await expect(page.locator('.prompt')).toHaveText('Pick up from the deck or discard pile');
+   await expect(page.locator('.opponent')).toHaveText('Opponent: 13 cards');
  }
 });
 
@@ -275,4 +277,26 @@ test('laydown explanation stays visible without pushing phone controls off scree
    const overflows=await page.evaluate(()=>['html','.table-area','.hand-scroll'].flatMap(selector=>[...document.querySelectorAll(selector)].filter(el=>el.checkVisibility()&&(el.scrollWidth>el.clientWidth+1||el.scrollHeight>el.clientHeight+1)).map(()=>selector)));
    expect(overflows).toEqual([]);
  }
+});
+
+
+for (const incomplete of [false,true]) test(`opponent count stays concealed ${incomplete ? 'through an incomplete goal' : 'until laydown, then tracks the hand'}`,async ({page}) => {
+ await page.clock.install();
+ await page.goto(`/tests/e2e/fixture.html?opponent-count${incomplete ? '&incomplete' : ''}`);
+ const header=page.locator('.opponent');
+ await expect(header).toHaveText('Opponent: 13 cards');
+ await page.clock.runFor(800); // AI picks up its fourteenth card.
+ await expect(page.locator('.prompt')).toHaveText('Opponent is taking their actions...');
+ await expect(header).toHaveText('Opponent: 13 cards');
+ expect(await header.evaluate(el=>el.getAnimations().length)).toBe(0);
+ await page.clock.runFor(800); // Two sets are shelved, optionally completing the goal.
+ await expect(page.locator('.prompt')).toHaveText('Opponent is discarding...');
+ await expect(header).toHaveText(incomplete ? 'Opponent: 13 cards' : 'Opponent: 8 cards');
+ if(incomplete) {
+   await expect(page.locator('.table-player')).toHaveCount(0);
+   expect(await header.evaluate(el=>el.getAnimations().length)).toBe(0);
+ } else await expect(page.locator('.table-player[data-player="1"]')).toHaveCount(1);
+ await page.clock.runFor(800); // Discard: live count changes only after laydown.
+ await expect(page.locator('.prompt')).toHaveText('Pick up from the deck or discard pile');
+ await expect(header).toHaveText(incomplete ? 'Opponent: 13 cards' : 'Opponent: 7 cards');
 });

@@ -249,7 +249,8 @@ export function mountApp(root: HTMLElement, game: Game) {
     handDrag.validate();
     const focused = document.activeElement instanceof HTMLElement ? document.activeElement.dataset.focus : undefined;
     const p = game.human;
-    const count = game.players[1].hand.length;
+    const opponent = game.players[1];
+    const count = opponent.laidDown ? opponent.hand.length : 13;
     if (count !== oldOpponentCount) {
       $('.opponent').textContent = `Opponent: ${count} cards`;
       if (oldOpponentCount >= 0) $('.opponent').animate([{opacity:0.2},{opacity:1}],{duration:400});

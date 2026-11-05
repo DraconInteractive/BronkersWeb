@@ -37,8 +37,9 @@ Rows 1 and 2 share the leftover height in a **1.3 : 1** ratio.
 ### Row 0: header
 - Left: **"Bronkers"**, Georgia bold 22, colour OnFelt, margin 24 left / 18 top.
 - Right, vertically centred, 64 px from the right edge: **"Opponent: {n} cards"** (Segoe UI 14, OnFelt).
-  Every time `n` changes, fade opacity 0.2 → 1 over 0.4 s. This flash is the only cue that the AI drew from
-  the deck.
+  **WEB ADDITION (2026-11-06):** `n` stays at 13 before opponent laydown, then
+  shows the actual hand count. Only displayed count changes fade opacity 0.2 → 1
+  over 0.4 s; hidden pickup/shelving/discard changes do not flash the header.
 - Far right (24 px margin): **"?" help button**, a 28×28 circle in Note colour, Segoe UI Semibold 15,
   Pencil colour; hover = NoteHover. Tooltip/aria-label "Controls".
 
