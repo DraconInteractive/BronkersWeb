@@ -133,3 +133,23 @@ html, body { height: 100%; overflow: hidden; }
 .mobile-drag .corner.top { top: 4px; left: 4px; }
 .mobile-drag .corner.bottom { bottom: 4px; right: 4px; }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+.round-overlay { z-index: 105; }
+.round-note { width: 440px; padding: 24px; text-align: center; max-height: calc(100dvh - 24px); overflow-y: auto; }
+.round-note .finish-mark { margin-bottom: 6px; font-size: 32px; }
+.round-winner { margin: 12px 0 18px; font-size: 16px; font-weight: 600; color: #1f5c43; }
+.round-results { width: 100%; border-collapse: collapse; margin-bottom: 22px; font-size: 13px; text-align: left; }
+.round-results th, .round-results td { padding: 11px 8px; border-bottom: 1px solid #bdaf7480; }
+.round-results thead th { font-size: 11px; font-weight: 500; white-space: nowrap; }
+.round-results tbody th { font-weight: 500; }
+.round-results th:last-child, .round-results td:last-child { text-align: right; }
+.round-winning-row { background: #1f5c4310; }
+.round-winning-row th { font-weight: 700; }
+.round-goal { display: block; margin-top: 3px; font-size: 11px; color: #646044; }
+@media (max-width: 370px), (max-height: 420px) {
+  .round-note { padding: 16px; }
+  .round-note .finish-mark { display: none; }
+  .round-note h2 { font-size: 22px; }
+  .round-winner { margin: 10px 0; font-size: 14px; }
+  .round-results { margin-bottom: 14px; font-size: 12px; }
+  .round-results th, .round-results td { padding: 8px 5px; }
+}

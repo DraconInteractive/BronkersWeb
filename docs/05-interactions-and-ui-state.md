@@ -26,10 +26,17 @@ actions), so they must be reproduced exactly. Shorthand:
 | Hand cards | always | always (any phase, either turn) | toggles selection (§2) |
 | Arrow keys | — | at least 1 hand card selected | reorder (§3) |
 | Help "?" | always | always | toggle overlay |
+| Next round / Continue (WEB ADDITION) | `roundResult != null` | always | `confirmRound()` (`02` §7.3) |
 | New game (WEB ADDITION) | `gameOver` | always | `newGame()` (`02` §7.5) |
 
 **Game over (WEB ADDITION):** while `gameOver` is true, every control above except New game is disabled,
 including the goal picker, hand selection and arrow keys. The overlay (`04` §10) blocks clicks anyway.
+
+**Round results (WEB ADDITION, 2026-11-05):** while `roundResult != null`, only its
+Next round / Continue button is active. The overlay freezes the table, goal picker,
+hand selection, drag/keyboard reordering and AI. Help closes, focus goes to the
+confirmation button, and backdrop clicks or Escape do not advance play. Confirming
+deals a new round, or opens game over if any player completed all ten goals.
 
 Visibility and enabled state are **reactive**. Recompute after every state change (AI steps included).
 

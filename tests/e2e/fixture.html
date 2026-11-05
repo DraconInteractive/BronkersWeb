@@ -15,5 +15,18 @@ if (new URLSearchParams(location.search).has('crowded')) {
    f.tryAdd(cards('AH')[0]);
  });
 }
+if (new URLSearchParams(location.search).has('round-ai')) {
+ const ai=game.players[1]; ai.goal=ai.goals[0]; ai.laidDown=true; ai.goal.completed=true;
+ ai.goal.formations[0].trySet(cards('5H 5S 5D'));
+ ai.goal.formations[1].trySet(cards('8H 8S 8D'));
+ ai.hand=cards('KH'); game.deck.cards=cards('5C'); game.discardPile=cards('3C');
+ if (new URLSearchParams(location.search).has('both')) {
+   game.human.goal=game.human.goals[0]; game.human.laidDown=true; game.human.goal.completed=true;
+   game.human.goal.formations[0].trySet(cards('3H 3S 3D'));
+   game.human.goal.formations[1].trySet(cards('4H 4S 4D'));
+ }
+ game.activePlayer=1;
+}
 mountApp(document.querySelector('#app'),game);
+if (new URLSearchParams(location.search).has('round-ai')) void game.processAITurn();
 </script></body></html>

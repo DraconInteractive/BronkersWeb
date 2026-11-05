@@ -78,8 +78,8 @@ migration from the existing tar installation. Caddy keeps using port 43187 and
    every enable/visibility rule (`docs/05`).
 3. **Quirks are preserved unless a decision says otherwise.** `docs/08` lists behaviour that looks odd but
    is what the original does, plus the decisions taken.
-4. **Deliberate additions are labelled.** The game over screen (`docs/08` Q1) is
-   marked **WEB ADDITION**. Approved touch controls and responsive layouts are
+4. **Deliberate additions are labelled.** Game over and the round-results confirmation
+   screen are marked **WEB ADDITION**. Approved touch controls and responsive layouts are
    documented in `docs/10`. Everything else follows the original rules.
 
 ## Documents

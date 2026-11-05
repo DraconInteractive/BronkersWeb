@@ -78,7 +78,7 @@ def check():
         assert json.loads((first / 'release.json').read_text())['sourceCommit'] == first_commit
         assert (first / 'public/assets/legacy.js').is_file()
         assert (root / 'previous').resolve() == legacy
-        print('PASS: git pull, real npm ci, 96 engine tests, production build and activation', flush=True)
+        print('PASS: git pull, real npm ci, engine tests, production build and activation', flush=True)
 
         entry = checkout / 'src/main.ts'
         original = entry.read_text()

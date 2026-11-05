@@ -7,8 +7,8 @@ Part B changes one.
 
 | # | Quirk | Where |
 |---|---|---|
-| A1 | **Points are never scored.** `points` is only shown on the goal sheet. There is no running total, no winner, no end-of-round summary. | `02` §4 |
-| A2 | A round ends **instantly** with a fresh deal. Nothing tells the human who went out. | `02` §7.3 |
+| A1 | **Points are never scored.** `points` is only shown on the goal sheet. There is no points total. The approved web addition now names the round winner in a results screen. | `02` §4 |
+| A2 | Original: a fresh deal happened instantly. **Superseded 2026-11-05:** round results name who went out and wait for confirmation. | `02` §7.3 |
 | A3 | The **human always starts** every round. The dealer doesn't rotate. | `02` §7.2 |
 | A4 | `statusMessage` is only ever set to `null`, so the status line never appears. Keep the hook (it is wired up), and show nothing. | `05` §7 |
 | A5 | Table rows read **"Player 0"** (human) and **"Player 1"** (AI), 0-based. | `04` §2 |
@@ -34,7 +34,7 @@ Part B changes one.
 |---|---|---|---|
 | Q1 | Goals running out. The original crashes: the AI picks from an empty list (`Random.Next(0)` → `remaining[0]` throws inside `async void`), and the human can never pick a goal again. | **Add a game over screen.** It triggers at a round end when any player has completed all 10 goals, and offers New game. This is a web addition. Nothing before that point changes. | `02` §7.5, `04` §10, `05` §1, `07` F17–F19 |
 | Q2 | Goal points: code (`1,1 \| 3,3 \| 5,5 \| 8,8 \| 10,10`) or the paper sheet (first row worth 2)? | **Use the code values.** | `02` §5 |
-| Q3 | Score tally / "went out" message? | **No message for now.** No scores on the game over screen either. A1 and A2 stand. | — |
+| Q3 | Score tally / "went out" message? | **Updated 2026-11-05:** show round results with winner and laydown status; confirmation advances to the next round or game over. No points tally. | — |
 | Q4 | Order of selected hand cards passed to `onFormationClicked`. | **Selection order** (order clicked), assumed to match WPF `SelectedItems`. It hasn't been checked in the WPF app. If a later check disagrees, only `02` §8.5 and `07` F16 change. | `02` §8.5, `05` §2 |
 
 ### Defaults still open (they apply unless changed)

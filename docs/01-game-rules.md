@@ -81,11 +81,13 @@ second Ace on the top end.
 ## Ending a round
 
 A round ends **immediately** when a player who has laid down this round has **no cards in hand**. That
-can happen by placing their last card on the table, or by discarding it. A new round is dealt at once.
-There is no score screen, no winner announcement, and no points tally.
+can happen by placing their last card on the table, or by discarding it. The web version now waits for confirmation before dealing again (see below).
+**WEB ADDITION (2026-11-05):** the finished table is now paused behind a round-results
+screen. It names the player who went out and shows who laid down, their laid-down
+goals and cards remaining. Confirm **Next round** to deal again. No points are tallied.
 
 ## Ending the game
 
 The original has no defined end of game. When goals run out it crashes. The web version adds one
 (decided in `08` Q1): **when a round ends and any player has completed all 10 goals, the game is over.**
-A game over screen names who finished and offers a new game with fresh goal sheets. No points are tallied.
+After confirming the final round results, a game over screen names who finished and offers a new game with fresh goal sheets. No points are tallied.

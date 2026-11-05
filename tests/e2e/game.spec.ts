@@ -86,6 +86,19 @@ test('place, return, lay down, add last cards and deal a new round',async ({page
  await page.getByRole('button',{name:'Finish actions',exact:true}).click();
  await selectByName(page,'King of Hearts');
  await page.getByRole('button',{name:'Discard',exact:true}).click();
+ const result=page.getByRole('dialog',{name:'Round complete'});
+ await expect(result).toBeVisible();
+ await expect(result.locator('.round-winner')).toHaveText('You won the round.');
+ await expect(result.getByRole('rowheader',{name:'You (Player 0)',exact:true})).toBeVisible();
+ await expect(result.locator('tbody tr').first().locator('td').first()).toContainText('Yes');
+ await expect(result.locator('tbody tr').last().locator('td').first()).toHaveText('No');
+ await expect(page.locator('.hand-card')).toHaveCount(0);
+ // Neither backdrop clicks nor keyboard shortcuts skip confirmation.
+ await page.locator('.round-overlay').click({position:{x:2,y:2}});
+ await page.keyboard.press('Escape');
+ await expect(result).toBeVisible();
+ await page.getByRole('button',{name:'Next round',exact:true}).click();
+ await expect(result).toBeHidden();
  await expect(page.locator('.hand-card')).toHaveCount(13);
  await expect(page.locator('.goal-name')).toHaveText('Choose a goal');
  await page.getByRole('button',{name:'Goal',exact:true}).click();
@@ -100,6 +113,10 @@ test('game over freezes table and New game resets the goal sheet',async ({page})
  await page.getByRole('button',{name:'Finish actions',exact:true}).click();
  await selectByName(page,'King of Hearts');
  await page.getByRole('button',{name:'Discard',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Round complete'})).toBeVisible();
+ await expect(page.getByRole('dialog',{name:'Game over'})).toBeHidden();
+ await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Round complete'})).toBeHidden();
  await expect(page.getByRole('dialog',{name:'Game over'})).toBeVisible();
  await expect(page.locator('.finisher')).toHaveText('You completed every goal.');
  await page.getByRole('button',{name:'New game',exact:true}).click();
@@ -175,4 +192,34 @@ test('mobile player tabs fit crowded laid-down formations and preserve the hand'
  await expect(page.locator('.own-goal')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Player 1',exact:true})).toBeVisible();
  await expect(page.locator('.table-tabs')).toBeHidden();
+});
+
+test('AI round results show laydowns, close help and wait for confirmation',async ({page},info) => {
+ for (const both of [false,true]) {
+   await page.goto(`/tests/e2e/fixture.html?round-ai${both ? '&both' : ''}`);
+   await page.getByRole('button',{name:'Controls',exact:true}).click();
+   await expect(page.getByRole('dialog',{name:'Controls'})).toBeVisible();
+   const result=page.getByRole('dialog',{name:'Round complete'});
+   await expect(result).toBeVisible({timeout:10000});
+   await expect(page.getByRole('dialog',{name:'Controls'})).toBeHidden();
+   await expect(result.locator('.round-winner')).toHaveText('Your opponent won the round.');
+   const rows=result.locator('tbody tr');
+   await expect(rows.first().locator('td').first()).toContainText(both ? 'Yes' : 'No');
+   await expect(rows.last().locator('td').first()).toContainText('Yes');
+   await expect(rows.last().locator('td').last()).toHaveText('0');
+   const next=page.getByRole('button',{name:'Next round',exact:true});
+   await expect(next).toBeFocused();
+   await page.keyboard.press('Tab');await expect(next).toBeFocused();
+   if (info.project.name==='mobile-chromium') {
+     for (const viewport of [{width:320,height:480},{width:844,height:390}]) {
+       await page.setViewportSize(viewport);
+       await expect(next).toBeInViewport({ratio:1});
+       expect(await result.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+     }
+   }
+   await next.click();
+   await expect(result).toBeHidden();
+   await expect(page.locator('.hand-card')).toHaveCount(13);
+   await expect(page.locator('.prompt')).toHaveText('Pick up from the deck or discard pile');
+ }
 });

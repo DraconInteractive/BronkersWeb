@@ -28,8 +28,16 @@ the original behavior.
 - **Accessibility:** named buttons, pressed selection states, visible focus,
   modal focus handling and a live turn prompt supplement the original controls.
   Reduced-motion CSS minimizes arrival and selection transitions.
-- **Game over:** the previously approved addition triggers only at a round end
-  after a player has completed all goals. The final table stays underneath.
+- **Round results (approved 2026-11-05):** every round end opens a confirmation
+  screen naming the player who went out and showing each player's laydown status,
+  laid-down goal and cards remaining. Results use a snapshot of the finished round.
+  The table is frozen underneath; no pickup, goal changes, selection, reordering
+  or AI actions can occur. Next round deals only after confirmation. Completed
+  goals persist. Help closes when results open, and the confirmation button takes
+  focus. Backdrop clicks and Escape do not dismiss results.
+- **Game over:** when any player has completed all goals, the final round results
+  appear first. Continue opens the game-over screen instead of dealing another
+  round; New game then starts a fresh session.
 
 There is no score tally, persistence, multiplayer service, or account system.
 Refreshing the browser starts a new session, matching the specified default.

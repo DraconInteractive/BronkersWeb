@@ -23,8 +23,8 @@ test('F2 pickup',() => { const g = game(); g.humanPickup(); expect(g.human.hand)
 test('F3 lazy discard refill',() => { const g = game(); g.deck.cards = []; g.discardPile = cards('AH 5C KS'); const top = g.discardPile[2]; g.pickup(); expect(g.discardPile).toEqual([top]); expect(g.deck.count).toBe(1); expect(g.human.hand).toHaveLength(14); });
 test('F4 empty deck and one discard gives no card',() => { const g = game(); g.deck.cards = []; g.pickup(); expect(g.human.hand).toHaveLength(13); expect(g.phase).toBe(Phase.PlayerActions); });
 test('F5 and F6 complete and lay down goal',() => { const g = game(); fillSets(g); expect(g.human.canLayDown).toBe(true); expect(g.prompt).toBe('Your goal is ready to lay down'); const goal = g.human.goal!; g.humanLayDown(); expect(g.human.laidDown).toBe(true); expect(goal.completed).toBe(true); expect(g.human.canLayDown).toBe(false); });
-test('F7 last table add deals immediately',() => { const g = game(); fillSets(g); g.humanLayDown(); g.human.hand = cards('5C'); g.selectedHand = [...g.human.hand]; g.place(g.human.goal!.formations[0]); expect(g.phase).toBe(Phase.WaitForPickup); expect(g.human.hand).toHaveLength(13); expect(g.human.goal).toBeNull(); });
-test('F8 last discard deals immediately',() => { const g = game(); fillSets(g); g.humanLayDown(); g.humanFinish(); g.selectedHand = [...g.human.hand]; g.humanDiscard(); expect(g.activePlayer).toBe(0); expect(g.human.hand).toHaveLength(13); expect(g.aiTask).toBeNull(); });
+test('F7 last table add pauses until confirmation',() => { const g = game(); fillSets(g); g.humanLayDown(); g.human.hand = cards('5C'); g.selectedHand = [...g.human.hand]; g.place(g.human.goal!.formations[0]); expect(g.roundResult?.winner).toBe(0); expect(g.human.hand).toHaveLength(0); g.confirmRound(); expect(g.phase).toBe(Phase.WaitForPickup); expect(g.human.hand).toHaveLength(13); expect(g.human.goal).toBeNull(); });
+test('F8 last discard pauses until confirmation',() => { const g = game(); fillSets(g); g.humanLayDown(); g.humanFinish(); g.selectedHand = [...g.human.hand]; g.humanDiscard(); expect(g.roundResult?.winner).toBe(0); expect(g.human.hand).toHaveLength(0); g.confirmRound(); expect(g.activePlayer).toBe(0); expect(g.human.hand).toHaveLength(13); expect(g.aiTask).toBeNull(); });
 test('F9 faithful empty hand before laydown needs goal change',() => {
  const g = game(); g.chooseGoal(9); g.phase = Phase.PlayerActions;
  const groups = ['5H 5S 5D','8H 8S 8D','3H 4H 5H 6H','9S 10S JS QS'].map(cards); g.human.hand = groups.flat();
@@ -42,14 +42,14 @@ test('F16 selection order swaps then appends, arriving wild unselected',() => { 
 test('F17 tenth AI goal only ends game at round end',() => {
  const g = game(); const ai = g.players[1]; ai.goals.forEach((goal,i) => { goal.completed = i !== 9; }); ai.goal = ai.goals[9];
  ai.goal.formations.forEach((f,i) => f.trySet(cards(i < 2 ? '5H 5S 5D' : '3H 4H 5H 6H'))); ai.refreshCanLayDown(); g.activePlayer = 1; g.tryLayDown(ai); expect(g.gameOver).toBe(false);
- g.activePlayer = 0; fillSets(g); g.humanLayDown(); g.humanFinish(); g.selectedHand = [...g.human.hand]; g.humanDiscard(); expect(g.gameOver).toBe(true); expect(g.finishers).toEqual([1]); expect(g.aiTask).toBeNull();
+ g.activePlayer = 0; fillSets(g); g.humanLayDown(); g.humanFinish(); g.selectedHand = [...g.human.hand]; g.humanDiscard(); expect(g.gameOver).toBe(false); expect(g.roundResult?.winner).toBe(0); g.confirmRound(); expect(g.gameOver).toBe(true); expect(g.finishers).toEqual([1]); expect(g.aiTask).toBeNull();
 });
 test.each([false,true])('F18 final human laydown goes out, both finishers %s',both => {
  const g = game(); fillSets(g); const goal = g.human.goal!; g.human.goals.forEach(g => { g.completed = g !== goal; }); if (both) g.players[1].goals.forEach(g => { g.completed = true; });
- g.human.hand = []; g.humanLayDown(); expect(g.gameOver).toBe(true); expect(g.finishers).toEqual(both ? [0,1] : [0]); expect(g.human.goal).toBe(goal);
+ g.human.hand = []; g.humanLayDown(); expect(g.roundResult?.winner).toBe(0); expect(g.gameOver).toBe(false); g.confirmRound(); expect(g.gameOver).toBe(true); expect(g.finishers).toEqual(both ? [0,1] : [0]); expect(g.human.goal).toBe(goal);
  const phase = g.phase; g.pickup(); g.chooseGoal(2); expect(g.phase).toBe(phase); expect(g.human.goal).toBe(goal);
 });
-test('F19 new game',() => { const g = game(); g.human.goals.forEach(g => { g.completed = true; }); g.human.laidDown = true; g.human.hand = []; g.tryEndRound(); const old = g.players; g.newGame(); expect(g.players).not.toBe(old); expect(g.gameOver).toBe(false); expect(g.players.every(p => p.goals.every(g => !g.completed))).toBe(true); expect(g.deck.count).toBe(77); expect(g.phase).toBe(Phase.WaitForPickup); });
+test('F19 new game',() => { const g = game(); g.human.goals.forEach(g => { g.completed = true; }); g.human.laidDown = true; g.human.hand = []; g.tryEndRound(); g.confirmRound(); const old = g.players; g.newGame(); expect(g.players).not.toBe(old); expect(g.gameOver).toBe(false); expect(g.players.every(p => p.goals.every(g => !g.completed))).toBe(true); expect(g.deck.count).toBe(77); expect(g.phase).toBe(Phase.WaitForPickup); });
 test('goal sheet order, points and slots',() => { const goals = goalSheet(); expect(goals.map(g => g.name)).toEqual(['2S','3S','1S 1R','2R','2S 1R','4S','3S 1R','1S 2R','3R','2S 2R']); expect(goals.map(g => g.points)).toEqual([1,1,3,3,5,5,8,8,10,10]); expect(goals[9].formations.map(f => f.kind)).toEqual(['Set','Set','Run','Run']); });
 test('human gates, selection regions and failed card selection',() => { const g = game(); g.chooseGoal(0); const f = g.human.goal!.formations[0]; g.selectedHand = g.human.hand.slice(0,3); const original = [...g.human.hand]; g.place(f); expect(g.human.hand).toEqual(original); g.humanPickup(); f.trySet(cards('5H 5S 5D')); g.human.hand = cards('6H'); g.selectHand(g.human.hand[0]); g.place(f); expect(g.selectedHand).toEqual(g.human.hand); g.selectFormation(f,f.cards[0]); expect(g.selectedHand).toHaveLength(0); g.activePlayer = 1; expect(g.slotEnabled(f)).toBe(false); const before = g.human.hand.length; g.humanPickup(); expect(g.human.hand).toHaveLength(before); g.chooseGoal(2); expect(g.human.goal?.name).toBe('1S 1R'); });
 describe('AI integration',() => {
@@ -60,13 +60,13 @@ describe('AI integration',() => {
  });
  test('AI can add to human formations and end round',async () => {
    const g = game(); fillSets(g); g.humanLayDown(); const ai = g.players[1]; ai.goal = ai.goals[0]; ai.goal.formations.forEach(f => f.trySet(cards('9H 9S 9D'))); ai.laidDown = true;
-   ai.hand = cards('5C'); g.deck.cards = cards('8C'); g.discardPile = cards('KH'); g.activePlayer = 1; g.phase = Phase.WaitForPickup; await g.processAITurn(); expect(g.activePlayer).toBe(0); expect(g.human.hand).toHaveLength(13); expect(ai.hand).toHaveLength(13);
+   ai.hand = cards('5C'); g.deck.cards = cards('8C'); g.discardPile = cards('KH'); g.activePlayer = 1; g.phase = Phase.WaitForPickup; await g.processAITurn(); expect(g.roundResult?.winner).toBe(1); expect(ai.hand).toHaveLength(0); expect(g.roundResult?.players.map(p => p.laidDown)).toEqual([true,true]); g.confirmRound(); expect(g.activePlayer).toBe(0); expect(g.human.hand).toHaveLength(13); expect(ai.hand).toHaveLength(13);
  });
  test('104 distinct cards survive 80 AI turns and repeated deck refill',async () => {
    const g = game();
    for (let turn = 0; turn < 80; turn++) {
      g.humanPickup(); g.humanFinish(); g.selectHand(g.human.hand[0]); g.humanDiscard(); await g.aiTask;
-     expect(allCards(g)).toHaveLength(104); expect(new Set(allCards(g)).size).toBe(104); expect(g.activePlayer).toBe(0); expect(g.phase).toBe(Phase.WaitForPickup);
+     expect(allCards(g)).toHaveLength(104); expect(new Set(allCards(g)).size).toBe(104); if (g.roundResult) g.confirmRound(); expect(g.activePlayer).toBe(0); expect(g.phase).toBe(Phase.WaitForPickup);
    }
  });
 });
@@ -88,4 +88,48 @@ test('direct reorder rejects stale cards, invalid positions and game-over change
  expect(g.human.hand).toEqual(original);
  g.gameOver = true; g.moveHandCard(original[0],3);
  expect(g.human.hand).toEqual(original);
+});
+
+test('round summary captures each player’s laydown status before any reset',() => {
+ const g=game(); fillSets(g); g.humanLayDown();
+ g.players[1].goals[0].completed=true; // Completed previously, not laid down this round.
+ g.players[1].goal=g.players[1].goals[2];
+ g.humanFinish(); g.selectedHand=[...g.human.hand]; g.humanDiscard();
+ expect(g.roundResult).toEqual({winner:0,players:[
+   {index:0,laidDown:true,cardsRemaining:0,goal:'2S'},
+   {index:1,laidDown:false,cardsRemaining:13,goal:null},
+ ]});
+ const summary=g.roundResult,deck=[...g.deck.cards],discard=[...g.discardPile];
+ expect(g.tryEndRound()).toBe(true); expect(g.roundResult).toBe(summary);
+ expect(g.deck.cards).toEqual(deck); expect(g.discardPile).toEqual(discard);
+ g.confirmRound(); expect(g.roundResult).toBeNull(); expect(g.human.goals[0].completed).toBe(true);
+ const fresh=[...g.human.hand]; g.confirmRound(); expect(g.human.hand).toEqual(fresh);
+});
+test('round summary pauses all human and AI actions until confirmed',async () => {
+ const g=game(); fillSets(g); g.humanLayDown(); g.humanFinish(); g.selectedHand=[...g.human.hand]; g.humanDiscard();
+ const result=g.roundResult,other=g.players[1],goal=g.human.goal!,form=goal.formations[0];
+ const before={hand:[...g.human.hand],other:[...other.hand],deck:[...g.deck.cards],discard:[...g.discardPile],active:g.activePlayer,phase:g.phase};
+ g.pickup(); g.pickup(true); g.humanPickup(); g.finishActions(); g.discard(other,other.hand[0]);
+ g.nextPlayer(); g.chooseGoal(2); g.place(form); g.returnToHand(form); g.tryLayDown(other);
+ g.selectHand(before.other[0]); g.selectFormation(form,form.cards[0]); g.moveHandCard(before.other[0],1); g.moveHandCards(1);
+ g.newGame(); await g.processAITurn();
+ expect(g.roundResult).toBe(result); expect(g.human.goal).toBe(goal);
+ expect({hand:g.human.hand,other:other.hand,deck:g.deck.cards,discard:g.discardPile,active:g.activePlayer,phase:g.phase}).toEqual(before);
+ expect(g.paused).toBe(true); expect(g.myTurn).toBe(false); expect(g.acting).toBe(false); expect(g.slotEnabled(form)).toBe(false);
+ g.confirmRound(); expect(g.paused).toBe(false); expect(g.canPickup).toBe(true);
+});
+test('an empty-hand normal laydown shows results and preserves completion for the next round',() => {
+ const g=game(); fillSets(g); g.human.hand=[]; g.humanLayDown();
+ expect(g.roundResult?.winner).toBe(0); expect(g.gameOver).toBe(false);
+ expect(g.human.goal?.completed).toBe(true); g.confirmRound();
+ expect(g.human.hand).toHaveLength(13); expect(g.human.goal).toBeNull(); expect(g.human.goals[0].completed).toBe(true);
+});
+test('AI winning discard reports its win and does not schedule a turn before confirmation',async () => {
+ const g=game(); const ai=g.players[1]; ai.goal=ai.goals[0]; ai.laidDown=true; ai.goal.completed=true;
+ ai.goal.formations[0].trySet(cards('5H 5S 5D')); ai.goal.formations[1].trySet(cards('8H 8S 8D'));
+ ai.hand=cards('KH'); g.deck.cards=cards('5C'); g.discardPile=cards('3C'); g.activePlayer=1;
+ await g.processAITurn();
+ expect(g.roundResult?.winner).toBe(1); expect(g.roundResult?.players.map(p=>[p.laidDown,p.cardsRemaining])).toEqual([[false,13],[true,0]]);
+ expect(names(g.discardPile)).toBe('3C KH'); expect(g.activePlayer).toBe(1); expect(g.aiTask).toBeNull();
+ g.confirmRound(); expect(g.activePlayer).toBe(0); expect(g.human.hand).toHaveLength(13);
 });

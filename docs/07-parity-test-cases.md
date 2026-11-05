@@ -138,7 +138,10 @@ Hand (in order): `3H 3S 7D 9C 10C JS KH 4D 8S QC 6D AH 5S`. Goal `1S 1R`, nothin
 | TG10 | 4H 5H 6H 7H 8H | 2R | 6H | `[4H,5H,6H,7H]` (earliest full window wins) |
 | TG11 | 7H 7S 9D | 2S | 7H | none |
 
-## 10. Flow scenarios (write as integration tests with a seeded RNG / stacked deck)
+## 10. Flow scenarios (integration tests with a seeded RNG / stacked deck)
+
+**WEB ADDITION (2026-11-05):** F7–F8 and F17–F19 now include the approved round-results
+pause and confirmation before the next deal or game-over screen.
 
 These come from **reading** `MainWindow.xaml.cs`, not from running it. That code depends on WPF and
 wasn't executed. F17–F19 cover the web addition and have no original to compare against.
@@ -151,8 +154,8 @@ wasn't executed. F17–F19 cover the web addition and have no original to compar
 | F4 | Deck at 0, discard pile `[c]`, pick deck | human receives **no** card, phase `PlayerActions` |
 | F5 | Human chooses goal 2S, fills both sets | `canLayDown` true; prompt "Your goal is ready to lay down"; Lay down enabled |
 | F6 | Human lays down with cards left | `laidDown 1`; goal completed; own section hidden; "Player 0" row shown |
-| F7 | Human (laid down) places last card on a table formation | round ends at once, new deal, `activePlayer 0` |
-| F8 | Human (laid down) discards last card | round ends at once |
+| F7 | Human (laid down) places last card on a table formation | round-results snapshot appears with human as winner; confirmation deals the next round, `activePlayer 0` |
+| F8 | Human (laid down) discards last card | round-results snapshot appears; confirmation deals the next round |
 | F9 | Human not laid down, every hand card shelved in goal slots (possible with 2S 2R + 14 cards), then Finish actions | round does **not** end (needs `laidDown`). Discard stays disabled (no card to select). Recover only by changing goal (`08` Q6) |
 | F10 | Human changes goal with filled slots | all slot cards appended to hand (formation order, sets then runs), slots cleared, `canLayDown` false |
 | F11 | Return one card from a valid 4-card set in own slot | that card to hand; set stays with 3 |
@@ -161,6 +164,6 @@ wasn't executed. F17–F19 cover the web addition and have no original to compar
 | F14 | Arrow-right with selection {3,4} of 5 | nothing moves |
 | F15 | Arrow-left with selection {0,2} | nothing moves (leading card at edge) |
 | F16 | Human selects 5S then 2D, clicks set `[5H,2C,5D]` | 5S swaps out 2C (2C to hand). Then 2D is appended. Result `[5H,5S,5D,2D]`, hand gains 2C |
-| F17 (web addition) | Player 1 has 9 goals completed, lays down the 10th mid-round, round continues, then someone goes out | at the round end: `gameOver` true, `finishers [1]`, no new deal, no AI turn scheduled |
-| F18 (web addition) | Human completes 10th goal and goes out in the same action | `gameOver` true, `finishers [0]` (or `[0,1]` if the AI also laid down its 10th goal earlier in this round) |
+| F17 (web addition) | Player 1 has 9 goals completed, lays down the 10th mid-round, round continues, then someone goes out | at the round end: round results first, `finishers [1]`, no AI turn scheduled; confirmation sets `gameOver` true with no new deal |
+| F18 (web addition) | Human completes 10th goal and goes out in the same action | round results first, then confirmation sets `gameOver` true, `finishers [0]` (or `[0,1]` if the AI also laid down its 10th goal earlier in this round) |
 | F19 (web addition) | New game after game over | fresh deck and players, no goals completed, `activePlayer 0`, `WaitForPickup`, `gameOver` false |

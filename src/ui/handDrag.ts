@@ -53,7 +53,7 @@ export class HandDrag {
   };
 
   private down = (event: PointerEvent) => {
-    if (!event.isPrimary || event.button !== 0 || this.gesture || this.options.game.gameOver) return;
+    if (!event.isPrimary || event.button !== 0 || this.gesture || this.options.game.paused) return;
     const node = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('.hand-card') : null;
     if (!node || node.disabled || node.closest('[inert]')) return;
     const card = this.options.game.human.hand.find(c => this.options.node(c) === node);
@@ -198,14 +198,14 @@ export class HandDrag {
     const g = this.gesture;
     if (!g) return;
     this.finish();
-    if (restore && g.preview && this.options.game.human.hand.includes(g.card) && !this.options.game.gameOver) {
+    if (restore && g.preview && this.options.game.human.hand.includes(g.card) && !this.options.game.paused) {
       this.options.game.moveHandCard(g.card, Math.min(g.originalIndex, this.options.game.human.hand.length - 1));
       this.options.setPage(g.originalPage);
     }
   }
 
   validate() {
-    if (this.gesture && (this.options.game.gameOver || !this.options.game.human.hand.includes(this.gesture.card))) this.cancel(false);
+    if (this.gesture && (this.options.game.paused || !this.options.game.human.hand.includes(this.gesture.card))) this.cancel(false);
   }
 
   dispose() {

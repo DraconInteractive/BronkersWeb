@@ -315,38 +315,49 @@ phase = WaitForPickup
 ```
 The human starts every round. Goals marked `completed` stay completed.
 
-### 7.3 `tryEndRound(): boolean`
+### 7.3 Round results (WEB ADDITION, approved 2026-11-05)
+
+The original dealt a new round immediately. The approved web behavior pauses for
+confirmation, retaining the finished table and completed-goal flags:
+
 ```
-p = players[activePlayer]
-if p.laidDown == 1 AND p.hand.length == 0:
-    if isGameOver(): enterGameOver()          // WEB ADDITION (§7.5), replaces the deal
-    else: setupRound()
+roundResult: null | {
+    winner: number,
+    players: { index, laidDown, cardsRemaining, goal }[]
+}
+paused = gameOver || roundResult != null
+
+tryEndRound():
+    if paused: return true
+    p = players[activePlayer]
+    if p.laidDown != 1 OR p.hand.length != 0: return false
+    finishers = indices of players with every goal completed
+    roundResult = snapshot of activePlayer as winner and each player's
+                  laidDown, hand.length, and laid-down goal name (null if unlaid)
+    notify changes
     return true
-return false
+
+confirmRound():
+    if roundResult == null OR gameOver: return
+    roundResult = null
+    if finishers.length > 0: gameOver = true; notify changes
+    else: setupRound()
 ```
-It only checks the **active** player. Without the §7.5 addition this is exactly the original.
+
+All gameplay inputs and AI processing are guarded by `paused`. Repeated end-round
+checks preserve the same snapshot, and repeated confirmations cannot deal twice.
+The winner is still the active player who went out after laying down, regardless
+of whether another player completed a goal during the round.
 
 ### 7.5 Game over (WEB ADDITION, decided in `08` Q1)
-The original has no game end. When goals run out it crashes (AI) or locks up (human). The web build
-adds a minimal game over. **Nothing before this point changes.**
 
-```
-isGameOver(): players.some(p => p.goals.every(g => g.completed))
+Completing the tenth goal mid-round does not stop play. At the round end,
+`finishers` records all players with ten completed goals. The round-results screen
+appears first; its Continue button then opens game over instead of starting a new
+round. The final table remains frozen beneath both overlays.
 
-enterGameOver():
-    gameOver = true                      // observable
-    finishers = indices of players with every goal completed (1 or 2 entries)
-    // do NOT call setupRound(); the table, hands and piles stay as they are underneath the overlay
-```
-- Checked **only when a round ends** (inside `tryEndRound`). Completing the 10th goal mid-round does not
-  stop the round. Play continues until someone goes out, as usual.
-- While `gameOver` is true, no action is possible (every control in `05` §1 is disabled), and no AI
-  turn is scheduled. `tryEndRound` returns true, so `discard()` doesn't call `nextPlayer()`, and the AI
-  paths already `return` after a round ends.
-- **`newGame()`**: discard all state and run the startup sequence (§7.1) again: new deck, two new
-  players with fresh goal sheets, `gameOver = false`, `setupRound()`. This is the same as reloading the
-  page.
-- No scores are shown (`08` Q3).
+`newGame()` is enabled only after game over. It creates a fresh deck and players,
+clears finishers and round results, and runs `setupRound()`. No points are tallied.
 
 ### 7.4 `nextPlayer()`
 ```

@@ -30,11 +30,13 @@ export function mountApp(root: HTMLElement, game: Game) {
     <footer class="footer"><p class="prompt" role="status" aria-live="polite"></p><div class="action-space"><button class="action finish">Finish actions</button><button class="action discard-action">Discard</button></div></footer>
   </main>
   <div class="overlay help-overlay" hidden><section class="note help-note" role="dialog" aria-modal="true" aria-labelledby="help-title"><header><h2 id="help-title">Controls</h2><button class="close-help" aria-label="Close controls">×</button></header><p class="rules-intro">Build your goal with sets and runs, lay it down, then empty your hand. Every 2 is wild.</p><dl></dl><div class="rules-footnote">A set is 3+ cards of one rank. A run is 4+ consecutive cards of one suit. Aces can be low or high.</div></section></div>
+  <div class="overlay round-overlay" hidden><section class="note round-note" role="dialog" aria-modal="true" aria-labelledby="round-title"><span class="finish-mark">♣</span><h2 id="round-title">Round complete</h2><p class="round-winner"></p><table class="round-results"><thead><tr><th scope="col">Player</th><th scope="col">Laid down</th><th scope="col">Cards left</th></tr></thead><tbody></tbody></table><button class="action next-round">Next round</button></section></div>
   <div class="overlay gameover-overlay" hidden><section class="note gameover-note" role="dialog" aria-modal="true" aria-labelledby="gameover-title"><span class="finish-mark">♣</span><h2 id="gameover-title">Game over</h2><p class="finisher"></p><button class="action new-game">New game</button></section></div>`;
   const $ = <T extends HTMLElement = HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
   const stage = $('.stage');
   const help = $('.help-overlay');
   const gameover = $('.gameover-overlay');
+  const roundOverlay = $('.round-overlay');
   const picker = $<HTMLButtonElement>('.goal-picker');
   const sheet = $('.goal-sheet');
   const hand = $('.hand');
@@ -52,11 +54,12 @@ export function mountApp(root: HTMLElement, game: Game) {
   });
   const helpButton = $<HTMLButtonElement>('.help-button');
   function showHelp(open: boolean) {
+    if (open && game.paused) return;
     if (open) handDrag.cancel();
     helpOpen = open; help.hidden = !open;
     if (open) { pickerOpen = false; sheet.hidden = true; picker.setAttribute('aria-expanded','false'); $('.close-help').focus(); }
     else helpButton.focus();
-    stage.inert = open || game.gameOver;
+    stage.inert = open || game.paused;
   }
   helpButton.onclick = () => showHelp(!helpOpen);
   $('.close-help').onclick = () => showHelp(false);
@@ -72,6 +75,7 @@ export function mountApp(root: HTMLElement, game: Game) {
     ['End your turn','Click Finish actions, select a card, then click Discard.'],
     ['Reorder cards','Drag a card to its new position. Tapping selects cards; dragging keeps your selection. Arrow keys also move selected cards.'],
     ['Hand pages','Use ‹ / › if your hand spans multiple pages. While dragging, hold over a page button to switch pages.'],
+    ['Round results','See who laid down and who went out, then confirm to continue.'],
     ['Table views','On small screens, tap Your goal or a player tab to switch table views.'],
   ];
   for (const [action,detail] of instructions) $('.help-note dl').append(element('dt','',action),element('dd','',detail));
@@ -89,6 +93,7 @@ export function mountApp(root: HTMLElement, game: Game) {
   }
   $('.hand-previous').onclick = () => { handPage--; layoutHand(); };
   $('.hand-next').onclick = () => { handPage++; layoutHand(); };
+  $('.next-round').onclick = () => { handPage = 0; game.confirmRound(); if (!game.gameOver) picker.focus(); };
   $('.new-game').onclick = () => { game.newGame(); picker.focus(); };
   picker.onclick = () => { pickerOpen = !pickerOpen; sheet.hidden = !pickerOpen; picker.setAttribute('aria-expanded',String(pickerOpen)); positionGoalSheet(); };
   const outsideClick = (event: MouseEvent) => {
@@ -99,7 +104,7 @@ export function mountApp(root: HTMLElement, game: Game) {
   document.addEventListener('pointerdown',outsideClick);
   const keydown = (event: KeyboardEvent) => {
     if (event.key === 'Escape' && handDrag.dragging) { event.preventDefault(); handDrag.cancel(); return; }
-    if (game.gameOver) { if (event.key === 'Tab') { event.preventDefault(); $('.new-game').focus(); } return; }
+    if (game.paused) { if (event.key === 'Tab') { event.preventDefault(); $(game.roundResult ? '.next-round' : '.new-game').focus(); } return; }
     if (event.key === 'Escape') { if (helpOpen) showHelp(false); else { pickerOpen = false; sheet.hidden = true; picker.setAttribute('aria-expanded','false'); } }
     if (helpOpen && event.key === 'Tab') { event.preventDefault(); $('.close-help').focus(); }
     if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && game.selectedHand.length) {
@@ -165,8 +170,8 @@ export function mountApp(root: HTMLElement, game: Game) {
     hand.style.setProperty('--hand-card-height',`${height}px`);
     $('.hand-pagination').hidden = pageCount === 1;
     $('.hand-page').textContent = `Hand ${handPage+1}/${pageCount}`;
-    $<HTMLButtonElement>('.hand-previous').disabled = handPage === 0 || game.gameOver;
-    $<HTMLButtonElement>('.hand-next').disabled = handPage === pageCount-1 || game.gameOver;
+    $<HTMLButtonElement>('.hand-previous').disabled = handPage === 0 || game.paused;
+    $<HTMLButtonElement>('.hand-next').disabled = handPage === pageCount-1 || game.paused;
     game.human.hand.forEach((card,i) => {
       const el = handNodes.get(card); if (!el) return;
       el.hidden = i < start || i >= start+handPageSize;
@@ -186,6 +191,7 @@ export function mountApp(root: HTMLElement, game: Game) {
     tabs.hidden = views.length < 2;
     tabs.replaceChildren(...views.map(view => {
       const tab = button(view.label,'table-tab',() => { tableView = view.key; layoutTable(); });
+      tab.disabled = game.paused;
       tab.setAttribute('aria-pressed',String(view.key === tableView)); return tab;
     }));
     $('.own-goal').classList.toggle('mobile-inactive',tableView !== 'own');
@@ -260,7 +266,7 @@ export function mountApp(root: HTMLElement, game: Game) {
     p.goals.forEach((goal,i) => {
       if (i%2 === 0) sheet.append(element('span','points-cell',String(goal.points)));
       const cell = button(goal.name,`goal-cell ${goal === p.goal ? 'current' : ''} ${goal.completed ? 'completed' : ''}`,() => { pickerOpen = false; game.chooseGoal(i); picker.focus(); });
-      cell.disabled = goal.completed || game.gameOver; cell.setAttribute('aria-label',`${goal.name}, ${goal.points} points${goal.completed ? ', completed' : ''}`); sheet.append(cell);
+      cell.disabled = goal.completed || game.paused; cell.setAttribute('aria-label',`${goal.name}, ${goal.points} points${goal.completed ? ', completed' : ''}`); sheet.append(cell);
     });
     sheet.hidden = !pickerOpen || p.laidDown; picker.setAttribute('aria-expanded',String(!sheet.hidden));
     $('.own-formations').replaceChildren(...(p.goal?.formations.map((f,i) => renderFormation(f,true,`own-${i}`)) ?? []));
@@ -279,19 +285,38 @@ export function mountApp(root: HTMLElement, game: Game) {
         el.addEventListener('animationend',() => el!.classList.remove('arrival'),{once:true});
       }
       if (hand.children[i] !== el) hand.insertBefore(el,hand.children[i] ?? null);
-      el.classList.toggle('selected',game.selectedHand.includes(card)); el.setAttribute('aria-pressed',String(game.selectedHand.includes(card))); el.disabled = game.gameOver;
+      el.classList.toggle('selected',game.selectedHand.includes(card)); el.setAttribute('aria-pressed',String(game.selectedHand.includes(card))); el.disabled = game.paused;
     });
     layoutHand(); layoutTable(); positionGoalSheet();
     $('.prompt').textContent = game.prompt;
     $('.finish').hidden = !game.acting;
     $('.discard-action').hidden = !game.myTurn || game.phase !== Phase.SelectDiscard;
     $<HTMLButtonElement>('.discard-action').disabled = game.selectedHand.length !== 1;
+    helpButton.disabled = game.paused;
+    picker.disabled = game.paused;
+    if (game.roundResult) {
+      const newlyOpen = roundOverlay.hidden;
+      helpOpen = false; help.hidden = true; pickerOpen = false; sheet.hidden = true;
+      picker.setAttribute('aria-expanded','false');
+      roundOverlay.hidden = false; stage.inert = true;
+      $('.round-winner').textContent = game.roundResult.winner === 0 ? 'You won the round.' : `Your opponent won the round.`;
+      $('.round-results tbody').replaceChildren(...game.roundResult.players.map(player => {
+        const row = element('tr',player.index === game.roundResult!.winner ? 'round-winning-row' : '');
+        const name = element('th','',player.index === 0 ? 'You (Player 0)' : `Opponent (Player ${player.index})`);
+        name.scope = 'row';
+        const laid = element('td','',player.laidDown ? 'Yes' : 'No');
+        if (player.goal) laid.append(element('span','round-goal',player.goal));
+        row.append(name,laid,element('td','',String(player.cardsRemaining))); return row;
+      }));
+      $('.next-round').textContent = game.finishers.length ? 'Continue' : 'Next round';
+      if (newlyOpen) $('.next-round').focus();
+    } else roundOverlay.hidden = true;
     if (game.gameOver) {
       const newlyOpen = gameover.hidden;
       helpOpen = false; help.hidden = true; gameover.hidden = false; stage.inert = true;
       $('.finisher').textContent = game.finishers.length === 2 ? 'You and your opponent both completed every goal.' : game.finishers[0] === 0 ? 'You completed every goal.' : 'Your opponent completed every goal.';
       if (newlyOpen) $('.new-game').focus();
-    } else { gameover.hidden = true; stage.inert = helpOpen; }
+    } else { gameover.hidden = true; stage.inert = helpOpen || game.roundResult !== null; }
     if (focused) root.querySelector<HTMLElement>(`[data-focus="${focused}"]`)?.focus({preventScroll:true});
   }
   const unsubscribe = game.subscribe(render);
