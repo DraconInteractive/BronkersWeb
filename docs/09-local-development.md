@@ -1,0 +1,71 @@
+# Local development setup
+
+Keep the runtime and downloads inside the repository's ignored `.tools/` folder.
+No system Node installation or shell profile changes are needed.
+
+Run from the repository root:
+
+```sh
+./scripts/setup-node
+./scripts/with-node node --version
+./scripts/with-node npm --version
+```
+
+On first installation the setup script downloads the latest Node 24 LTS Linux
+x86-64 or ARM64 archive for the current host from nodejs.org and checks its SHA-256 against the release manifest.
+It records the installed version in `.node-version`; commit that file after a
+successful installation so subsequent setups use the same version.
+
+The wrapper localises npm's cache, global installation prefix, and Playwright
+browser downloads. Project dependencies use the usual local `node_modules/`.
+It does not isolate system libraries as a container would.
+
+Install the pinned project dependencies:
+
+```sh
+./scripts/with-node npm ci
+```
+
+Useful commands:
+
+```sh
+./scripts/with-node npm run typecheck
+./scripts/with-node npm test
+./scripts/with-node npm run test:e2e
+./scripts/with-node npm run build
+./scripts/with-node npx playwright install chromium firefox webkit
+./scripts/dev
+```
+
+The application entry point is `index.html` and `src/main.ts`. The pure engine
+lives in `src/engine/`; browser rendering and input handling are in `src/ui/`.
+Vitest runs `tests/parity/` using the supplied expected values and flow scenarios,
+without executing the C# harness. Playwright runs `tests/e2e/` against Chromium,
+Firefox, and an emulated Android viewport. It reuses an existing server on 43187,
+or starts one for the tests. Deterministic UI fixtures live under `tests/e2e/`
+and are not included in the production build.
+
+`npm run build` type-checks the project and produces self-contained static files
+in `dist/`. Build artifacts, browser reports and downloaded tools are ignored by Git.
+
+The development launcher binds to all IPv4 interfaces on port **43187** and fails
+if that port is occupied. On the host use `http://localhost:43187`; from a Windows
+PC or phone on the same network use `http://<host-LAN-IP>:43187`. Network/firewall
+reachability still needs checking when the server is running.
+
+Vite, TypeScript, Vitest, and Playwright are installed as project development
+dependencies with exact versions and a lockfile. The C# parity harness is outside the current setup scope.
+Manual testing on the user's Windows PC and mobile devices supplements automation.
+
+## Setup status
+
+Node 24.22.2 and npm 11.19.1 are installed in `.tools/node`. The game builds and
+runs on `0.0.0.0:43187`. External device connectivity still requires a manual
+check from the user's Windows PC or phone.
+
+Chromium, Firefox, and WebKit browser binaries are downloaded inside
+`.tools/browsers`. Headless Chromium and Firefox both passed launch, rendering,
+and button-click checks. Playwright reports these missing host libraries for
+WebKit: `libgstgl-1.0.so.0`, `libgstcodecparsers-1.0.so.0`, and
+`libmanette-0.2.so.0`. WebKit automation is not ready; no system packages were
+installed. Actual iOS testing can be performed manually for now.

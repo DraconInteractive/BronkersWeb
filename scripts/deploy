@@ -1,0 +1,211 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Keep functions in memory before updating this checkout with git pull.
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+app_root=/var/www/bronkers
+staging_dir=''
+link_dir=''
+
+fail() { printf 'Deploy: %s\n' "$*" >&2; exit 1; }
+usage() {
+  cat <<'HELP'
+Usage: scripts/deploy [update|init|rollback|status] [options]
+
+  update               Pull, install dependencies, test, build, activate (default).
+  init --user USER     One-time setup; migrates an extracted current/ directory.
+  rollback [RELEASE]   Activate previous, or a named release from status.
+  status               Show active/previous releases and retained release IDs.
+
+Options:
+  --root PATH          Deployment directory (default /var/www/bronkers).
+  --no-pull            Build the checked-out commit without pulling (update only).
+  --user USER          Owner of deployment directories (init only).
+
+Run updates as your regular user. Only init normally needs sudo.
+HELP
+}
+cleanup() {
+  [[ -z "$staging_dir" ]] || rm -rf -- "$staging_dir"
+  [[ -z "$link_dir" ]] || rm -rf -- "$link_dir"
+}
+trap cleanup EXIT
+
+lock_deployment() {
+  [[ -d "$app_root/releases" && -w "$app_root" ]] || fail "Run scripts/deploy init first; $app_root must be writable by the deploy user."
+  exec 9>"$app_root/.deploy.lock"
+  flock -n 9 || fail 'Another deployment or rollback is running.'
+}
+
+release_path() {
+  local id="$1"
+  [[ "$id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || fail 'Invalid release ID.'
+  local path
+  path="$(realpath -e -- "$app_root/releases/$id")" || fail "Release not found: $id"
+  [[ "$path" == "$app_root/releases/$id" && -f "$path/public/index.html" ]] || fail "Not a valid local release: $id"
+  printf '%s\n' "$path"
+}
+
+swap_link() {
+  local target="$1" name="$2"
+  [[ ! -e "$app_root/$name" || -L "$app_root/$name" ]] || fail "$name must be a symlink; run init to migrate an extracted directory."
+  link_dir="$(mktemp -d "$app_root/.link.XXXXXX")"
+  ln -s -- "$target" "$link_dir/link"
+  mv -Tf -- "$link_dir/link" "$app_root/$name"
+  rmdir -- "$link_dir"
+  link_dir=''
+}
+
+activate() {
+  local target="$1" old=''
+  if [[ -L "$app_root/current" ]]; then
+    old="$(readlink -f -- "$app_root/current")"
+    [[ "$(release_path "$(basename -- "$old")")" == "$old" ]] || fail 'current must point into this deployment root.'
+    [[ "$old" != "$target" ]] || { printf 'Already active: %s\n' "$(basename -- "$target")"; return; }
+    swap_link "$old" previous
+  elif [[ -e "$app_root/current" ]]; then
+    fail 'current is a directory; run init before deploying.'
+  fi
+  swap_link "$target" current
+  printf 'Active release: %s\n' "$(basename -- "$target")"
+}
+
+initialize() {
+  local owner="$1" uid gid legacy
+  uid="$(id -u "$owner")" || fail "Unknown deploy user: $owner"
+  gid="$(id -g "$owner")"
+  [[ "$uid" != 0 ]] || fail 'Choose a regular deploy user, not root.'
+  [[ ! -L "$app_root" && ! -L "$app_root/releases" ]] || fail 'Deployment root and releases must be real directories.'
+  install -d -m 0755 -o "$uid" -g "$gid" "$app_root" "$app_root/releases"
+  touch "$app_root/.deploy.lock"
+  chown "$uid:$gid" "$app_root/.deploy.lock"
+  lock_deployment
+  if [[ -d "$app_root/current" && ! -L "$app_root/current" ]]; then
+    [[ -f "$app_root/current/public/index.html" ]] || fail 'Existing current/ does not contain public/index.html; no migration performed.'
+    legacy="$(mktemp -d "$app_root/releases/legacy-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")"
+    rmdir -- "$legacy"
+    mv -- "$app_root/current" "$legacy"
+    # If symlink creation fails, restore the original directory immediately.
+    if ! ln -s -- "$legacy" "$app_root/current"; then
+      mv -- "$legacy" "$app_root/current"
+      fail 'Could not create current symlink; original directory restored.'
+    fi
+    chmod -R a+rX "$legacy"
+    printf 'Preserved existing site as: %s\n' "$(basename -- "$legacy")"
+  elif [[ -L "$app_root/current" ]]; then
+    local active
+    active="$(readlink -f -- "$app_root/current")"
+    [[ -n "$active" ]] || fail 'current is a broken symlink.'
+    [[ "$(release_path "$(basename -- "$active")")" == "$active" ]] || fail 'current must point into this deployment root.'
+  elif [[ -e "$app_root/current" ]]; then
+    fail 'current must be a release directory or symlink.'
+  fi
+  printf 'Ready for deployments by %s. Caddy root: %s/current/public\n' "$owner" "$app_root"
+}
+
+assert_clean() {
+  [[ -z "$(git status --porcelain --untracked-files=normal)" ]] || fail 'Checkout has local changes. Commit/push them or resolve them before deploying; nothing was discarded.'
+}
+
+update() {
+  local pull="$1" commit release_id old_assets
+  [[ "$EUID" != 0 ]] || fail 'Run update as your regular deploy user, not with sudo.'
+  lock_deployment
+  [[ ! -e "$app_root/current" || -L "$app_root/current" ]] || fail 'Run init to migrate the existing current/ directory.'
+  cd "$project_dir"
+  mkdir -p .tools
+  exec 8>.tools/deploy.lock
+  flock -n 8 || fail 'Another build is using this checkout.'
+  assert_clean
+  git symbolic-ref --quiet HEAD >/dev/null || fail 'Check out a branch before deploying.'
+  if [[ "$pull" == yes ]]; then
+    git rev-parse --verify '@{upstream}' >/dev/null 2>&1 || fail 'This branch has no upstream. Set one, or use --no-pull for a local commit.'
+    git pull --ff-only
+    assert_clean
+    [[ "$(git rev-parse HEAD)" == "$(git rev-parse '@{upstream}')" ]] || fail 'Local branch has unpublished commits. Push them first, or use --no-pull for an intentional local build.'
+  fi
+  [[ -f .node-version && -f package-lock.json ]] || fail 'The app and its lockfiles must be committed before cloning/deploying.'
+  ./scripts/setup-node
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 ./scripts/with-node npm ci --include=dev --no-fund --no-audit
+  ./scripts/with-node npm test
+  ./scripts/with-node npm run build
+  assert_clean
+  [[ -f dist/index.html && -d dist/assets ]] || fail 'Build output is incomplete.'
+  commit="$(git rev-parse HEAD)"
+  staging_dir="$(mktemp -d "$app_root/releases/.build.XXXXXX")"
+  release_id="$(date -u +%Y%m%dT%H%M%SZ)-${commit:0:12}-${staging_dir##*.}"
+  mkdir "$staging_dir/public"
+  # Keep prior hashed assets so an old HTML response can finish loading mid-update.
+  old_assets="$app_root/current/public/assets"
+  if [[ -d "$old_assets" ]]; then
+    mkdir "$staging_dir/public/assets"
+    cp -R "$old_assets/." "$staging_dir/public/assets/"
+  fi
+  cp -R dist/. "$staging_dir/public/"
+  ./scripts/with-node node --input-type=module - "$staging_dir/release.json" "$release_id" "$commit" <<'JS'
+import {writeFileSync} from 'node:fs';
+const [path,release,sourceCommit] = process.argv.slice(2);
+writeFileSync(path,JSON.stringify({name:'bronkers-web',release,sourceCommit,builtAt:new Date().toISOString(),node:process.version},null,2)+'\n');
+JS
+  find "$staging_dir" -type d -exec chmod 755 {} +
+  find "$staging_dir" -type f -exec chmod 644 {} +
+  mv -- "$staging_dir" "$app_root/releases/$release_id"
+  staging_dir=''
+  activate "$app_root/releases/$release_id"
+  printf 'Deployment complete. Refresh the browser; Caddy does not need a restart.\n'
+}
+
+rollback() {
+  local id="$1" target
+  lock_deployment
+  if [[ -z "$id" ]]; then
+    [[ -L "$app_root/previous" ]] || fail 'No previous release. Use status to choose a retained release ID.'
+    target="$(readlink -f -- "$app_root/previous")"
+    id="$(basename -- "$target")"
+    [[ "$(release_path "$id")" == "$target" ]] || fail 'previous must point into this deployment root.'
+  fi
+  target="$(release_path "$id")"
+  activate "$target"
+}
+
+status() {
+  local name
+  for name in current previous; do
+    if [[ -L "$app_root/$name" ]]; then printf '%s: %s\n' "$name" "$(readlink -- "$app_root/$name")";
+    elif [[ -e "$app_root/$name" ]]; then printf '%s: extracted directory (run init)\n' "$name";
+    else printf '%s: none\n' "$name"; fi
+  done
+  printf 'Retained releases:\n'
+  if [[ -d "$app_root/releases" ]]; then
+    find "$app_root/releases" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -printf '  %f\n' | sort
+  fi
+}
+
+main() {
+  local command=update pull=yes owner='' release=''
+  case "${1:-}" in update|init|rollback|status) command="$1"; shift;; esac
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --root) [[ $# -ge 2 && -n "$2" ]] || fail '--root requires a path.'; app_root="$2"; shift 2;;
+      --user) [[ $# -ge 2 && -n "$2" ]] || fail '--user requires a username.'; owner="$2"; shift 2;;
+      --no-pull) pull=no; shift;;
+      --help|-h) usage; return;;
+      --*) fail "Unknown option: $1";;
+      *) [[ "$command" == rollback && -z "$release" ]] || fail "Unexpected argument: $1"; release="$1"; shift;;
+    esac
+  done
+  [[ "$app_root" == /* ]] || fail '--root must be an absolute path.'
+  app_root="$(realpath -m -- "$app_root")"
+  [[ "$app_root" != / && "$app_root" != /var && "$app_root" != /var/www && "$app_root" != "$project_dir" ]] || fail 'Choose a dedicated application directory.'
+  [[ "$command" == update || "$pull" == yes ]] || fail '--no-pull is only valid for update.'
+  [[ "$command" == init || -z "$owner" ]] || fail '--user is only valid for init.'
+  case "$command" in
+    init) initialize "${owner:-$(id -un)}";;
+    update) update "$pull";;
+    rollback) rollback "$release";;
+    status) status;;
+  esac
+}
+# Parse exit on the same line, so a git pull replacing this file cannot leave
+# Bash reading a different script tail after the running main function returns.
+main "$@"; exit $?

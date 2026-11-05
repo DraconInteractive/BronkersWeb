@@ -2,3 +2,7 @@ bin/
 obj/
 node_modules/
 dist/
+.tools/
+test-results/
+playwright-report/
+releases/

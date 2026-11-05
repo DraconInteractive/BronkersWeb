@@ -1,0 +1,14 @@
+# HTTP example: use behind an existing HTTPS proxy, or add TLS for your domain.
+# Install this as a separate site, without replacing other virtual hosts.
+server {
+    listen 80;
+    server_name bronkers.example.com;
+    root /var/www/bronkers/current/public;
+    index index.html;
+
+    add_header Cache-Control "no-cache";
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

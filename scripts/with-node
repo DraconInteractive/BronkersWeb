@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+tools_dir="$project_dir/.tools"
+[[ -x "$tools_dir/node/bin/node" ]] || {
+  echo 'Local Node is missing. Run scripts/setup-node first.' >&2; exit 1;
+}
+export PATH="$tools_dir/node/bin:$PATH"
+export npm_config_cache="$tools_dir/npm-cache"
+export npm_config_prefix="$tools_dir/npm-global"
+export PLAYWRIGHT_BROWSERS_PATH="$tools_dir/browsers"
+[[ $# -gt 0 ]] || { echo 'Usage: scripts/with-node COMMAND [ARGUMENTS...]' >&2; exit 1; }
+cd "$project_dir"
+exec "$@"

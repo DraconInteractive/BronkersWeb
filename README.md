@@ -1,9 +1,70 @@
-# Bronkers Web — Specification Pack
+# Bronkers Web
 
 This folder holds the full specification for rebuilding **Bronkers** (a C# / WPF card game, .NET 9) as a
 web application, hosted on an **antiX Linux** server.
 
-No application code exists yet. These documents are the contract for writing it.
+The browser game is implemented in TypeScript, with a pure game engine and a
+responsive DOM interface. The specification and original source below define its
+gameplay. Everything runs in the player's browser; hosting requires static files
+only, with no backend or database. Reloading starts a fresh game.
+
+## Run locally
+
+From this repository directory:
+
+```sh
+./scripts/setup-node
+./scripts/with-node npm ci
+./scripts/dev
+```
+
+Open **http://localhost:43187/** on the host, or **http://<host-LAN-IP>:43187/**
+from another device on the same network. Node, npm caches and browser downloads
+stay inside the ignored `.tools/` directory.
+
+```sh
+./scripts/with-node npm test          # Rules, AI and round-flow tests
+./scripts/with-node npm run test:e2e  # Chromium, Firefox and mobile Chromium
+./scripts/with-node npm run build    # Type checking and static output in dist/
+```
+
+For browser tests on a fresh checkout, first run
+`./scripts/with-node npx playwright install chromium firefox`.
+See [local development](docs/09-local-development.md) for setup details, and
+[mobile adaptations](docs/10-web-adaptations.md) for the approved UI additions.
+Copy the contents of `dist/` to the eventual static web server for deployment.
+
+For an uploadable Linux VPS deployment bundle:
+
+```sh
+./scripts/with-node npm run package
+```
+
+This produces a timestamped archive and checksum in `releases/`, including Caddy
+and nginx examples. See [VPS deployment](docs/11-vps-deployment.md). The VPS needs
+only a static web server; Node.js is required on the build machine only.
+
+## Deploy updates from Git
+
+For the existing VPS, after committing and pushing the implementation, clone the
+repository there and run this one-time setup as your usual deploy user:
+
+```sh
+sudo ./scripts/deploy init --user "$(id -un)"
+```
+
+Then every update is one command from that VPS checkout:
+
+```sh
+./scripts/deploy
+```
+
+It pulls the upstream branch, installs the pinned tools/dependencies locally,
+runs the engine tests, builds, and atomically activates a release. Failed builds
+leave the live version intact. `./scripts/deploy rollback` restores the previous
+release. See [Git deployment](docs/12-git-deployment.md) for complete setup and
+migration from the existing tar installation. Caddy keeps using port 43187 and
+`/var/www/bronkers/current/public` in this VPS setup.
 
 ## Ground rules
 
@@ -17,8 +78,9 @@ No application code exists yet. These documents are the contract for writing it.
    every enable/visibility rule (`docs/05`).
 3. **Quirks are preserved unless a decision says otherwise.** `docs/08` lists behaviour that looks odd but
    is what the original does, plus the decisions taken.
-4. **Deliberate additions are labelled.** The only one so far is the game over screen (`docs/08` Q1). It is
-   marked **WEB ADDITION** wherever it appears. Everything not marked must match the original.
+4. **Deliberate additions are labelled.** The game over screen (`docs/08` Q1) is
+   marked **WEB ADDITION**. Approved touch controls and responsive layouts are
+   documented in `docs/10`. Everything else follows the original rules.
 
 ## Documents
 
@@ -32,6 +94,8 @@ No application code exists yet. These documents are the contract for writing it.
 | [docs/06-architecture-and-hosting.md](docs/06-architecture-and-hosting.md) | Recommended stack, module layout, and deployment on antiX |
 | [docs/07-parity-test-cases.md](docs/07-parity-test-cases.md) | Concrete input → output cases that the web engine must pass |
 | [docs/08-quirks-and-open-questions.md](docs/08-quirks-and-open-questions.md) | Odd but faithful behaviour, decisions taken, and remaining defaults |
+| [docs/09-local-development.md](docs/09-local-development.md) | Workspace-local tools, development commands, and browser testing limitations |
+| [docs/10-web-adaptations.md](docs/10-web-adaptations.md) | Approved responsive layouts, touch controls, and accessibility additions |
 
 ## Reference material
 

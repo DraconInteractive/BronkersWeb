@@ -1,0 +1,202 @@
+import { Card } from './card';
+import { Deck } from './deck';
+import type { Formation } from './formation';
+import { Player } from './player';
+import { getCardScores, lowestCard, tryGetFormation, wantsDiscard } from './ai';
+import type { RNG } from './rng';
+export enum Phase { WaitForPickup, PlayerActions, SelectDiscard }
+export type Scheduler = (milliseconds: number) => Promise<void>;
+export class Game {
+  deck: Deck;
+  players = [new Player(), new Player()];
+  discardPile: Card[] = [];
+  activePlayer = 0;
+  phase = Phase.WaitForPickup;
+  statusMessage: string | null = null;
+  gameOver = false;
+  finishers: number[] = [];
+  selectedHand: Card[] = [];
+  selectedFormationCards: Card[] = [];
+  private listeners = new Set<() => void>();
+  private disposed = false;
+  aiTask: Promise<void> | null = null;
+  constructor(public rng: RNG = Math.random, private delay: Scheduler = ms => new Promise(r => setTimeout(r,ms))) {
+    this.deck = new Deck(rng); this.setupRound();
+  }
+  subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
+  dispose() { this.disposed = true; this.listeners.clear(); }
+  get human() { return this.players[0]; }
+  get myTurn() { return !this.gameOver && this.activePlayer === 0; }
+  get acting() { return this.myTurn && this.phase === Phase.PlayerActions; }
+  get canPickup() { return this.myTurn && this.phase === Phase.WaitForPickup; }
+  changed() {
+    this.selectedHand = this.selectedHand.filter(c => this.human.hand.includes(c));
+    const formations = this.players.flatMap(p => p.goal?.formations ?? []);
+    this.selectedFormationCards = this.selectedFormationCards.filter(c => formations.some(f => f.cards.includes(c)));
+    for (const listener of this.listeners) listener();
+  }
+  setupRound() {
+    this.selectedHand = []; this.selectedFormationCards = []; this.discardPile = [];
+    this.deck.initializeCards();
+    for (const p of this.players) { p.reset(); p.takeCards(this.deck.deal(13).cards); }
+    this.discardPile.push(this.deck.deal(1).cards[0]);
+    this.activePlayer = 0; this.phase = Phase.WaitForPickup; this.changed();
+  }
+  newGame() {
+    if (!this.gameOver) return;
+    this.players = [new Player(), new Player()]; this.deck = new Deck(this.rng);
+    this.gameOver = false; this.finishers = []; this.setupRound();
+  }
+  tryEndRound() {
+    const p = this.players[this.activePlayer];
+    if (!p.laidDown || p.hand.length) return false;
+    this.finishers = this.players.flatMap((p,i) => p.goals.every(g => g.completed) ? [i] : []);
+    if (this.finishers.length) { this.gameOver = true; this.changed(); }
+    else this.setupRound();
+    return true;
+  }
+  pickup(fromDiscard = false) {
+    if (this.gameOver || this.phase !== Phase.WaitForPickup) return;
+    const p = this.players[this.activePlayer];
+    if (fromDiscard) {
+      const c = this.discardPile.pop(); if (!c) return;
+      p.takeCards([c]);
+    } else {
+      const dealt = this.deck.deal(1); p.takeCards(dealt.cards);
+      if (dealt.remaining) {
+        const top = this.discardPile.at(-1);
+        this.deck.add(this.discardPile.slice(0,-1),true);
+        this.discardPile = top ? [top] : [];
+        p.takeCards(this.deck.deal(dealt.remaining).cards);
+      }
+    }
+    this.phase = Phase.PlayerActions; this.changed();
+  }
+  humanPickup(fromDiscard = false) { if (this.canPickup) this.pickup(fromDiscard); }
+  finishActions() { if (!this.gameOver && this.phase === Phase.PlayerActions) { this.phase = Phase.SelectDiscard; this.changed(); } }
+  humanFinish() { if (this.acting) this.finishActions(); }
+  discard(p: Player, card: Card) {
+    if (this.gameOver || p !== this.players[this.activePlayer] || this.phase !== Phase.SelectDiscard || !p.hand.includes(card)) return;
+    this.discardPile.push(card); p.removeCards([card]);
+    if (!this.tryEndRound()) this.nextPlayer();
+    this.changed();
+  }
+  humanDiscard() { if (this.myTurn && this.selectedHand.length === 1) this.discard(this.human,this.selectedHand[0]); }
+  nextPlayer() {
+    if (this.gameOver) return;
+    this.statusMessage = null; this.activePlayer = (this.activePlayer+1) % this.players.length;
+    this.phase = Phase.WaitForPickup; this.changed();
+    if (this.activePlayer !== 0) this.aiTask = this.processAITurn();
+  }
+  chooseGoal(index: number) {
+    const goal = this.human.goals[index];
+    if (this.gameOver || this.human.laidDown || !goal || goal.completed || goal === this.human.goal) return;
+    this.selectedFormationCards = [];
+    for (const f of this.human.goal?.formations ?? []) { this.human.takeCards(f.cards); f.cards = []; }
+    this.human.goal = goal; this.human.refreshCanLayDown(); this.changed();
+  }
+  slotEnabled(f: Formation) {
+    if (!this.acting) return false;
+    return this.players.some((p,i) => p.goal?.formations.includes(f) && (p.laidDown ? this.human.laidDown : i === 0));
+  }
+  place(f: Formation) {
+    if (!this.slotEnabled(f)) return;
+    const chosen = [...this.selectedHand];
+    if (!f.cards.length && f.trySet(chosen)) this.human.removeCards(chosen);
+    else if (f.cards.length) for (const c of chosen) {
+      const result = f.tryAdd(c);
+      if (result.ok) { this.human.removeCards([c]); this.human.takeCards(result.swapped); }
+    }
+    this.human.refreshCanLayDown(); this.tryEndRound(); this.changed();
+  }
+  returnToHand(f: Formation) {
+    if (!this.acting || this.human.laidDown || !this.human.goal?.formations.includes(f)) return;
+    const chosen = f.cards.filter(c => this.selectedFormationCards.includes(c));
+    f.cards = f.cards.filter(c => !chosen.includes(c)); this.human.takeCards(chosen);
+    if (!f.isValid()) { this.human.takeCards(f.cards); f.cards = []; }
+    this.human.refreshCanLayDown(); this.changed();
+  }
+  tryLayDown(p: Player) {
+    if (this.gameOver || p.laidDown || !p.canLayDown) return false;
+    p.laidDown = true; p.refreshCanLayDown(); if (p.goal) p.goal.completed = true;
+    this.tryEndRound(); this.changed(); return true;
+  }
+  humanLayDown() { if (this.acting) this.tryLayDown(this.human); }
+  selectHand(card: Card) {
+    if (this.gameOver || !this.human.hand.includes(card)) return;
+    this.selectedFormationCards = [];
+    this.selectedHand = this.selectedHand.includes(card) ? this.selectedHand.filter(c => c !== card) : [...this.selectedHand,card];
+    this.changed();
+  }
+  selectFormation(f: Formation, card: Card) {
+    if (!this.slotEnabled(f) || !f.cards.includes(card)) return;
+    this.selectedHand = [];
+    this.selectedFormationCards = this.selectedFormationCards.filter(c => f.cards.includes(c));
+    this.selectedFormationCards = this.selectedFormationCards.includes(card) ? this.selectedFormationCards.filter(c => c !== card) : [...this.selectedFormationCards,card];
+    this.changed();
+  }
+  moveHandCard(card: Card, to: number) {
+    if (this.gameOver || !Number.isInteger(to)) return;
+    const hand = this.human.hand;
+    const from = hand.indexOf(card);
+    if (from < 0 || to < 0 || to >= hand.length || from === to) return;
+    hand.splice(to, 0, hand.splice(from, 1)[0]);
+    this.changed();
+  }
+  moveHandCards(step: -1 | 1) {
+    if (this.gameOver || !this.selectedHand.length) return;
+    const hand = this.human.hand;
+    const indices = this.selectedHand.map(c => hand.indexOf(c)).sort((a,b) => step < 0 ? a-b : b-a);
+    const leading = indices[0]+step;
+    if (leading >= 0 && leading < hand.length) for (const from of indices) hand.splice(from+step,0,hand.splice(from,1)[0]);
+    this.changed();
+  }
+  get prompt() {
+    if (this.activePlayer === 0) {
+      if (this.phase === Phase.SelectDiscard) return 'Select one card to discard';
+      if (this.phase === Phase.PlayerActions) return this.human.canLayDown ? 'Your goal is ready to lay down' : 'Place cards in your goal, or finish your actions';
+      return 'Pick up from the deck or discard pile';
+    }
+    return ['Opponent is picking up...', 'Opponent is taking their actions...', 'Opponent is discarding...'][this.phase];
+  }
+  async processAITurn() {
+    const p = this.players[this.activePlayer];
+    if (!p.goal) { const remaining = p.goals.filter(g => !g.completed); p.goal = remaining[Math.floor(this.rng()*remaining.length)]; this.changed(); }
+    await this.delay(800); if (this.disposed) return;
+    this.pickup(wantsDiscard(p,this.discardPile.at(-1)));
+    await this.delay(800); if (this.disposed) return;
+    if (!p.laidDown) {
+      let shelved: boolean;
+      do {
+        shelved = false;
+        const ranked = [...getCardScores(p)].filter(([c]) => !c.isWild).sort((a,b) => b[1]-a[1]);
+        for (const [card] of ranked) {
+          const candidate = tryGetFormation(p,card);
+          if (!candidate) continue;
+          if (!p.goal!.formations.find(f => !f.cards.length && f.trySet(candidate))) continue;
+          p.removeCards(candidate); this.changed(); shelved = true; break;
+        }
+      } while (shelved);
+    } else {
+      let added: boolean;
+      do {
+        added = false;
+        for (const other of this.players) {
+          if (!other.goal || !other.laidDown) continue;
+          for (const f of other.goal.formations) for (const c of [...p.hand]) {
+            const result = f.tryAdd(c); if (!result.ok) continue;
+            p.removeCards([c]); p.takeCards(result.swapped); this.changed(); added = true;
+          }
+        }
+      } while (added);
+      if (this.tryEndRound()) return;
+    }
+    const wentOut = !p.hand.length;
+    p.refreshCanLayDown(); this.tryLayDown(p);
+    if (wentOut) return;
+    this.finishActions();
+    await this.delay(800); if (this.disposed) return;
+    this.discard(p,lowestCard(getCardScores(p)));
+    await this.delay(800);
+  }
+}

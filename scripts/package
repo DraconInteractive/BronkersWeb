@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$project_dir"
+./scripts/with-node npm run build
+release_id="$(date -u +%Y%m%dT%H%M%SZ)"
+mkdir -p releases .tools
+archive="$project_dir/releases/bronkers-web-$release_id.tar.gz"
+[[ ! -e "$archive" ]] || { echo 'A package with this timestamp already exists; retry in a second.' >&2; exit 1; }
+staging_dir="$(mktemp -d "$project_dir/.tools/package.XXXXXX")"
+trap 'rm -rf -- "$staging_dir"' EXIT
+mkdir "$staging_dir/public" "$staging_dir/deploy"
+cp -R dist/. "$staging_dir/public/"
+cp deploy/Caddyfile.example deploy/nginx.conf.example "$staging_dir/deploy/"
+cp docs/11-vps-deployment.md "$staging_dir/DEPLOY.md"
+./scripts/with-node node --input-type=module - "$staging_dir/release.json" "$release_id" <<'JS'
+import {writeFileSync, readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+const [destination, release] = process.argv.slice(2);
+let commit = null, dirty = null;
+try {
+  commit = execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+  dirty = !!execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim();
+} catch {}
+const {version} = JSON.parse(readFileSync('package.json','utf8'));
+writeFileSync(destination, JSON.stringify({name:'bronkers-web',version,release,builtAt:new Date().toISOString(),sourceCommit:commit,uncommittedChanges:dirty,node:process.version},null,2)+'\n');
+JS
+find "$staging_dir" -type d -exec chmod 755 {} +
+find "$staging_dir" -type f -exec chmod 644 {} +
+(cd "$staging_dir" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+tar -czf "$archive" -C "$staging_dir" .
+(cd releases && sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256")
+printf '\nDeployment archive: %s\nChecksum: %s.sha256\n' "$archive" "$archive"

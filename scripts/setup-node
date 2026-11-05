@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+tools_dir="$project_dir/.tools"
+mkdir -p "$tools_dir"
+[[ "$(uname -s)" == Linux ]] || { echo 'This installer supports Linux.' >&2; exit 1; }
+case "$(uname -m)" in
+  x86_64) node_arch=x64;;
+  aarch64|arm64) node_arch=arm64;;
+  *) echo 'This installer supports Linux x86-64 and ARM64.' >&2; exit 1;;
+esac
+if [[ -x "$tools_dir/node/bin/node" && -f "$project_dir/.node-version" ]]; then
+  expected_version="$(cat "$project_dir/.node-version")"
+  actual_version="$("$tools_dir/node/bin/node" --version)"
+  [[ "$actual_version" == "v$expected_version" ]] || {
+    echo 'Local Node differs from .node-version; remove .tools/node explicitly before reinstalling.' >&2
+    exit 1
+  }
+  "$project_dir/scripts/with-node" node --version
+  "$project_dir/scripts/with-node" npm --version
+  exit 0
+fi
+if [[ -f "$project_dir/.node-version" ]]; then
+  version="$(cat "$project_dir/.node-version")"
+  [[ "$version" =~ ^24\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid .node-version' >&2; exit 1; }
+  release_url="https://nodejs.org/dist/v$version"
+else
+  release_url='https://nodejs.org/dist/latest-v24.x'
+fi
+staging_dir="$(mktemp -d "$tools_dir/node-install.XXXXXX")"
+trap 'rm -rf -- "$staging_dir"' EXIT
+curl -fsSL --connect-timeout 15 "$release_url/SHASUMS256.txt" -o "$staging_dir/SHASUMS256.txt"
+checksum_line="$(awk -v suffix="-linux-$node_arch.tar.xz" '$2 ~ /^node-v24\.[0-9]+\.[0-9]+-linux-(x64|arm64)\.tar\.xz$/ && substr($2,length($2)-length(suffix)+1) == suffix {print}' "$staging_dir/SHASUMS256.txt")"
+[[ -n "$checksum_line" ]] || { echo 'Node archive checksum not found.' >&2; exit 1; }
+archive="${checksum_line##* }"
+curl -fsSL --connect-timeout 15 "$release_url/$archive" -o "$staging_dir/$archive"
+printf '%s\n' "$checksum_line" > "$staging_dir/archive.sha256"
+(cd "$staging_dir" && sha256sum -c archive.sha256)
+mkdir "$staging_dir/runtime"
+tar -xJf "$staging_dir/$archive" -C "$staging_dir/runtime" --strip-components=1
+installed_version="$("$staging_dir/runtime/bin/node" --version)"
+if [[ -e "$tools_dir/node" ]]; then
+  echo 'Local Node already exists; remove .tools/node explicitly before reinstalling.' >&2
+  exit 1
+fi
+mv "$staging_dir/runtime" "$tools_dir/node"
+printf '%s\n' "${installed_version#v}" > "$project_dir/.node-version"
+"$project_dir/scripts/with-node" node --version
+"$project_dir/scripts/with-node" npm --version

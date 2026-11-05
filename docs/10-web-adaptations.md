@@ -1,0 +1,46 @@
+# Approved web adaptations
+
+The user approved browser-based play on iOS, Android, and Windows, including
+responsive layouts and touch equivalents for keyboard controls. These are UI
+additions; formation validation, turn timing, AI, and goal progression retain
+the original behavior.
+
+- **Desktop:** the 1280×720 table scales uniformly to fit the viewport. The felt
+  background, left piles, right table, bottom fan, sticky-note goal sheet and
+  prompt/action area follow the original layout.
+- **Smaller screens:** the game fits the live viewport, including browser toolbar
+  changes and safe-area padding. Portrait places the piles above the goals; short
+  landscape screens place them beside the table. Hand cards overlap slightly in compact rows,
+  with one row on short screens and up to two on taller screens. When the hand
+  cannot fit at a readable size, explicit previous/next page buttons make every
+  card reachable. The game page and hand do not scroll. Player tabs show one
+  table view at a time on phones, and formation spacing adapts to its available
+  width. Desktop still shows every laid-down player row together.
+- **Touch reordering:** tap a card to select it, or drag it to reorder the hand.
+  Mouse and pen use the same gesture. A small movement threshold distinguishes
+  taps from drags, and dragging preserves the current selection. The move-arrow
+  toolbar is removed. Keyboard arrows still move selected cards as a group.
+  Dropping outside the hand, pressing Escape, or a canceled pointer restores the
+  original position. On paged hands, holding over a page button for half a second
+  changes pages during the drag. Reordering never places or discards a card.
+- **Help:** includes touch controls, hand paging, table views and a brief explanation of sets, runs
+  and wilds. The arrow keys still work while help is open, as in the original.
+- **Accessibility:** named buttons, pressed selection states, visible focus,
+  modal focus handling and a live turn prompt supplement the original controls.
+  Reduced-motion CSS minimizes arrival and selection transitions.
+- **Game over:** the previously approved addition triggers only at a round end
+  after a player has completed all goals. The final table stays underneath.
+
+There is no score tally, persistence, multiplayer service, or account system.
+Refreshing the browser starts a new session, matching the specified default.
+
+Automated coverage uses desktop Chromium and Firefox and mobile Chromium.
+Playwright WebKit binaries are downloaded but cannot run until the host's
+missing WebKit libraries are supplied. Real iOS Safari, Android and Windows
+device testing remains part of manual acceptance testing.
+
+Mobile regression tests cover 320×480 through 428×926 portrait viewports and
+667×375 through 932×430 landscape viewports. They check actual card and slot
+bounds, page through the complete hand, and assert that game regions do not
+overflow; merely hiding scrollbars does not satisfy these checks. Help notes may
+scroll when needed to keep their text readable.

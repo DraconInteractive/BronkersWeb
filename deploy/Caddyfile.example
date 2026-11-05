@@ -1,0 +1,7 @@
+# Add this site block to your existing Caddyfile, replacing the domain.
+bronkers.example.com {
+    root * /var/www/bronkers/current/public
+    encode gzip
+    header Cache-Control "no-cache"
+    file_server
+}
