@@ -1,5 +1,5 @@
 import { Card, suitSymbols } from '../engine/card';
-import { Game, Phase } from '../engine/game';
+import { Game, Phase, LAY_DOWN_FIRST_MESSAGE } from '../engine/game';
 import type { Formation } from '../engine/formation';
 import { HandDrag } from './handDrag';
 
@@ -219,16 +219,22 @@ export function mountApp(root: HTMLElement, game: Game) {
   function renderFormation(f: Formation, own: boolean, key: string) {
     const wrapper = element('div','formation'); const row = element('div','formation-row');
     const enabled = game.slotEnabled(f);
+    const explainLayDown = game.needsLayDownToAdd(f);
     const cards = element('div','formation-cards');
     cards.style.width = f.cards.length ? `${(f.cards.length-1)*26+62}px` : '0px';
     f.cards.forEach((card,i) => {
-      const el = button('',`table-card ${game.selectedFormationCards.includes(card) ? 'selected' : ''}`,() => game.selectFormation(f,card));
-      el.append(cardFace(card)); el.style.left = `${i*26}px`; el.disabled = !enabled;
+      const el = button('',`table-card ${game.selectedFormationCards.includes(card) ? 'selected' : ''}`,() => explainLayDown ? game.place(f) : game.selectFormation(f,card));
+      el.append(cardFace(card)); el.style.left = `${i*26}px`; el.disabled = !enabled && !explainLayDown;
+      el.setAttribute('aria-disabled',String(!enabled));
+      if (explainLayDown) { el.title = LAY_DOWN_FIRST_MESSAGE; el.tabIndex = -1; }
       el.setAttribute('aria-label',card.displayStr()); el.setAttribute('aria-pressed',String(game.selectedFormationCards.includes(card)));
       el.dataset.focus = `${key}-card-${card.id}`; cards.append(el);
     });
     const slot = button(f.cards.length ? '+' : `${f.kind}\n${f.kind === 'Set' ? '3' : '4'}+ cards`,`slot ${f.cards.length ? 'filled-slot' : 'empty-slot'}`,() => game.place(f));
-    slot.disabled = !enabled; slot.setAttribute('aria-label',f.cards.length ? `Add cards to ${f.kind.toLowerCase()}` : `${f.kind}\n${f.kind === 'Set' ? '3' : '4'}+ cards`);
+    slot.disabled = !enabled && !explainLayDown;
+    slot.setAttribute('aria-disabled',String(!enabled));
+    if (explainLayDown) slot.title = LAY_DOWN_FIRST_MESSAGE;
+    slot.setAttribute('aria-label',f.cards.length ? `Add cards to ${f.kind.toLowerCase()}` : `${f.kind}\n${f.kind === 'Set' ? '3' : '4'}+ cards`);
     slot.dataset.focus = `${key}-slot`;
     row.append(cards,slot); wrapper.append(row);
     if (own) {
@@ -288,7 +294,8 @@ export function mountApp(root: HTMLElement, game: Game) {
       el.classList.toggle('selected',game.selectedHand.includes(card)); el.setAttribute('aria-pressed',String(game.selectedHand.includes(card))); el.disabled = game.paused;
     });
     layoutHand(); layoutTable(); positionGoalSheet();
-    $('.prompt').textContent = game.prompt;
+    $('.prompt').textContent = game.statusMessage ?? game.prompt;
+    $('.prompt').classList.toggle('status-message',!!game.statusMessage);
     $('.finish').hidden = !game.acting;
     $('.discard-action').hidden = !game.myTurn || game.phase !== Phase.SelectDiscard;
     $<HTMLButtonElement>('.discard-action').disabled = game.selectedHand.length !== 1;

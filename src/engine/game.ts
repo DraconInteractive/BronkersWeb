@@ -5,6 +5,7 @@ import { Player } from './player';
 import { getCardScores, lowestCard, tryGetFormation, wantsDiscard } from './ai';
 import type { RNG } from './rng';
 export enum Phase { WaitForPickup, PlayerActions, SelectDiscard }
+export const LAY_DOWN_FIRST_MESSAGE = "Lay down your goal before adding cards to your opponent's formations.";
 export type RoundResult = {
   winner: number;
   players: Array<{ index: number; laidDown: boolean; cardsRemaining: number; goal: string | null }>;
@@ -43,6 +44,7 @@ export class Game {
   }
   setupRound() {
     this.roundResult = null;
+    this.statusMessage = null;
     this.selectedHand = []; this.selectedFormationCards = []; this.discardPile = [];
     this.deck.initializeCards();
     for (const p of this.players) { p.reset(); p.takeCards(this.deck.deal(13).cards); }
@@ -58,6 +60,7 @@ export class Game {
     if (this.paused) return true;
     const p = this.players[this.activePlayer];
     if (!p.laidDown || p.hand.length) return false;
+    this.statusMessage = null;
     this.finishers = this.players.flatMap((p,i) => p.goals.every(g => g.completed) ? [i] : []);
     this.roundResult = {
       winner: this.activePlayer,
@@ -90,10 +93,11 @@ export class Game {
         p.takeCards(this.deck.deal(dealt.remaining).cards);
       }
     }
+    this.statusMessage = null;
     this.phase = Phase.PlayerActions; this.changed();
   }
   humanPickup(fromDiscard = false) { if (this.canPickup) this.pickup(fromDiscard); }
-  finishActions() { if (!this.paused && this.phase === Phase.PlayerActions) { this.phase = Phase.SelectDiscard; this.changed(); } }
+  finishActions() { if (!this.paused && this.phase === Phase.PlayerActions) { this.statusMessage = null; this.phase = Phase.SelectDiscard; this.changed(); } }
   humanFinish() { if (this.acting) this.finishActions(); }
   discard(p: Player, card: Card) {
     if (this.paused || p !== this.players[this.activePlayer] || this.phase !== Phase.SelectDiscard || !p.hand.includes(card)) return;
@@ -111,6 +115,7 @@ export class Game {
   chooseGoal(index: number) {
     const goal = this.human.goals[index];
     if (this.paused || this.human.laidDown || !goal || goal.completed || goal === this.human.goal) return;
+    this.statusMessage = null;
     this.selectedFormationCards = [];
     for (const f of this.human.goal?.formations ?? []) { this.human.takeCards(f.cards); f.cards = []; }
     this.human.goal = goal; this.human.refreshCanLayDown(); this.changed();
@@ -119,8 +124,15 @@ export class Game {
     if (!this.acting) return false;
     return this.players.some((p,i) => p.goal?.formations.includes(f) && (p.laidDown ? this.human.laidDown : i === 0));
   }
+  needsLayDownToAdd(f: Formation) {
+    return !this.paused && !this.human.laidDown && this.players.some((p,i) => i !== 0 && p.laidDown && p.goal?.formations.includes(f));
+  }
   place(f: Formation) {
-    if (!this.slotEnabled(f)) return;
+    if (!this.slotEnabled(f)) {
+      if (this.needsLayDownToAdd(f)) { this.statusMessage = LAY_DOWN_FIRST_MESSAGE; this.changed(); }
+      return;
+    }
+    this.statusMessage = null;
     const chosen = [...this.selectedHand];
     if (!f.cards.length && f.trySet(chosen)) this.human.removeCards(chosen);
     else if (f.cards.length) for (const c of chosen) {
@@ -131,6 +143,7 @@ export class Game {
   }
   returnToHand(f: Formation) {
     if (!this.acting || this.human.laidDown || !this.human.goal?.formations.includes(f)) return;
+    this.statusMessage = null;
     const chosen = f.cards.filter(c => this.selectedFormationCards.includes(c));
     f.cards = f.cards.filter(c => !chosen.includes(c)); this.human.takeCards(chosen);
     if (!f.isValid()) { this.human.takeCards(f.cards); f.cards = []; }
@@ -138,6 +151,7 @@ export class Game {
   }
   tryLayDown(p: Player) {
     if (this.paused || p.laidDown || !p.canLayDown) return false;
+    this.statusMessage = null;
     p.laidDown = true; p.refreshCanLayDown(); if (p.goal) p.goal.completed = true;
     this.tryEndRound(); this.changed(); return true;
   }

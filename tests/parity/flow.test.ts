@@ -133,3 +133,46 @@ test('AI winning discard reports its win and does not schedule a turn before con
  expect(names(g.discardPile)).toBe('3C KH'); expect(g.activePlayer).toBe(1); expect(g.aiTask).toBeNull();
  g.confirmRound(); expect(g.activePlayer).toBe(0); expect(g.human.hand).toHaveLength(13);
 });
+
+function opponentSet(g: Game) {
+ const opponent=g.players[1]; opponent.goal=opponent.goals[0]; opponent.laidDown=true; opponent.goal.completed=true;
+ opponent.goal.formations[0].trySet(cards('5H 5S 5D'));
+ opponent.goal.formations[1].trySet(cards('8H 8S 8D'));
+ return opponent.goal.formations[0];
+}
+test.each([
+ [0,Phase.WaitForPickup],[0,Phase.PlayerActions],[0,Phase.SelectDiscard],
+ [1,Phase.WaitForPickup],[1,Phase.PlayerActions],[1,Phase.SelectDiscard],
+])('blocked opponent add explains laydown without moving cards, player %s phase %s',(active,phase) => {
+ const g=game(),form=opponentSet(g); g.human.hand=cards('5C KH'); g.selectHand(g.human.hand[0]);
+ g.activePlayer=active; g.phase=phase;
+ const before={hand:[...g.human.hand],selected:[...g.selectedHand],formation:[...form.cards],deck:[...g.deck.cards],discard:[...g.discardPile]};
+ expect(g.slotEnabled(form)).toBe(false); g.place(form);
+ expect(g.statusMessage).toBe("Lay down your goal before adding cards to your opponent's formations.");
+ expect({hand:g.human.hand,selected:g.selectedHand,formation:form.cards,deck:g.deck.cards,discard:g.discardPile}).toEqual(before);
+ expect(g.phase).toBe(phase); expect(g.activePlayer).toBe(active);
+});
+test('laying down clears the explanation and allows the previously blocked add',() => {
+ const g=game(); fillSets(g); const form=opponentSet(g); g.human.hand=cards('5C KH'); g.selectHand(g.human.hand[0]);
+ g.place(form); expect(g.statusMessage).not.toBeNull();
+ g.humanLayDown(); expect(g.statusMessage).toBeNull(); expect(g.slotEnabled(form)).toBe(true);
+ g.place(form); expect(names(form.cards)).toBe('5H 5S 5D 5C'); expect(names(g.human.hand)).toBe('KH');
+ expect(g.statusMessage).toBeNull(); expect(g.selectedHand).toHaveLength(0);
+});
+test('other action gates and round results do not produce a misleading laydown warning',() => {
+ const g=game(); g.chooseGoal(0); const own=g.human.goal!.formations[0];
+ g.place(own); expect(g.statusMessage).toBeNull();
+ const form=opponentSet(g); g.human.laidDown=true;
+ g.place(form); expect(g.statusMessage).toBeNull(); // Already laid down, but has not picked up.
+ g.human.hand=[]; g.tryEndRound();
+ g.place(form); expect(g.statusMessage).toBeNull(); expect(g.roundResult).not.toBeNull();
+});
+test('corrective actions and turn changes clear the laydown hint',() => {
+ const g=game(); const form=opponentSet(g);
+ g.place(form); expect(g.statusMessage).not.toBeNull();
+ g.humanPickup(); expect(g.statusMessage).toBeNull();
+ g.place(form); g.chooseGoal(0); expect(g.statusMessage).toBeNull();
+ g.place(form); g.place(g.human.goal!.formations[0]); expect(g.statusMessage).toBeNull();
+ g.place(form); g.humanFinish(); expect(g.statusMessage).toBeNull();
+ g.place(form); g.setupRound(); expect(g.statusMessage).toBeNull();
+});

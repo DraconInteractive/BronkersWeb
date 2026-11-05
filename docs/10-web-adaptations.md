@@ -28,6 +28,15 @@ the original behavior.
 - **Accessibility:** named buttons, pressed selection states, visible focus,
   modal focus handling and a live turn prompt supplement the original controls.
   Reduced-motion CSS minimizes arrival and selection transitions.
+- **Blocked opponent adds:** clicking or tapping an opponent's formation or its
+  + before laying down explains: "Lay down your goal before adding cards to your
+  opponent's formations." The explanation replaces the normal prompt in gold,
+  keeping the mobile layout compact. Selected cards and table contents stay
+  untouched. Locked adds remain unavailable (`aria-disabled`) but can explain
+  their restriction; keyboard users can focus the + and press Enter for the hint.
+  The hint clears on laydown, goal changes, working on own formations, pickup,
+  finishing actions, turn changes or a new round. Other invalid moves retain their
+  existing behavior.
 - **Round results (approved 2026-11-05):** every round end opens a confirmation
   screen naming the player who went out and showing each player's laydown status,
   laid-down goal and cards remaining. Results use a snapshot of the finished round.

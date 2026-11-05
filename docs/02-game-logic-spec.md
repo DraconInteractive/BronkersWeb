@@ -287,7 +287,7 @@ discardPile: Card[]                  // last element = top
 players: Player[2]                   // [0] human, [1] AI
 activePlayer: number                 // observable
 phase: TurnPhase                     // observable
-statusMessage: string | null         // observable; only ever set to null (see 08)
+statusMessage: string | null         // blocked-add explanation, otherwise null (WEB ADDITION; docs/10)
 gameOver: boolean                    // observable; WEB ADDITION (§7.5), starts false
 finishers: number[]                  // WEB ADDITION (§7.5), player indices that completed every goal
 selectedFormationCards: Card[]       // human's selection inside table/goal formations

@@ -223,3 +223,56 @@ test('AI round results show laydowns, close help and wait for confirmation',asyn
    await expect(page.locator('.prompt')).toHaveText('Pick up from the deck or discard pile');
  }
 });
+
+test('blocked opponent additions explain laydown, preserve cards and unlock after laying down',async ({page},info) => {
+ await page.goto('/tests/e2e/fixture.html?crowded');
+ await fillGoal(page);
+ await selectByName(page,'5 of Clubs');
+ const mobile=info.project.name==='mobile-chromium';
+ if(mobile)await page.getByRole('button',{name:'Player 1',exact:true}).tap();
+ const opponent=page.locator('.table-player[data-player="1"]');
+ const before=await opponent.locator('.table-card').count();
+ const blocked=opponent.locator('.slot').first();
+ await expect(blocked).toBeDisabled();
+ // aria-disabled communicates that the add action is unavailable. Real pointer
+ // input can still ask for the reason without enabling the move itself.
+ const box=await blocked.boundingBox();if(!box)throw Error('Missing opponent slot');
+ if(mobile)await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);
+ else await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
+ await expect(page.locator('.prompt.status-message')).toHaveText("Lay down your goal before adding cards to your opponent's formations.");
+ await expect(page.locator('.hand-card')).toHaveCount(2);
+ await expect(page.locator('.hand-card[aria-pressed=true]')).toHaveAttribute('aria-label','5 of Clubs');
+ await expect(opponent.locator('.table-card')).toHaveCount(before);
+ await blocked.focus();await page.keyboard.press('Enter');
+ await expect(page.locator('.prompt')).toHaveClass(/status-message/);
+ // Clicking a locked formation card gives the same hint, rather than silently
+ // dropping the hand selection or playing the card.
+ const card=await opponent.locator('.table-card').first().boundingBox();if(!card)throw Error('Missing opponent card');
+ if(mobile)await page.touchscreen.tap(card.x+3,card.y+12);
+ else await page.mouse.click(card.x+3,card.y+12);
+ await expect(page.locator('.prompt')).toHaveClass(/status-message/);
+ await expect(opponent.locator('.table-card')).toHaveCount(before);
+ await expect(page.locator('.hand-card[aria-pressed=true]')).toHaveCount(1);
+ if(mobile)await page.getByRole('button',{name:'Your goal',exact:true}).tap();
+ await page.getByRole('button',{name:'Lay down',exact:true}).click();
+ await expect(page.locator('.prompt')).not.toHaveClass(/status-message/);
+ if(mobile)await page.getByRole('button',{name:'Player 1',exact:true}).tap();
+ await expect(opponent.locator('.slot').first()).toBeEnabled();
+ await opponent.locator('.slot').first().click();
+ await expect(opponent.locator('.table-card')).toHaveCount(before+1);
+ await expect(page.locator('.hand-card')).toHaveCount(1);
+ await expect(page.locator('.prompt')).not.toHaveClass(/status-message/);
+});
+
+test('laydown explanation stays visible without pushing phone controls off screen',async ({page}) => {
+ for(const size of [{width:320,height:480},{width:844,height:390}]) {
+   await page.setViewportSize(size);await page.goto('/tests/e2e/fixture.html?crowded');
+   await page.getByRole('button',{name:'Player 1',exact:true}).click();
+   const slot=page.locator('.table-player[data-player="1"] .slot').first();
+   const box=await slot.boundingBox();if(!box)throw Error('Missing blocked slot');
+   await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
+   await expect(page.locator('.prompt.status-message')).toBeInViewport({ratio:1});
+   const overflows=await page.evaluate(()=>['html','.table-area','.hand-scroll'].flatMap(selector=>[...document.querySelectorAll(selector)].filter(el=>el.checkVisibility()&&(el.scrollWidth>el.clientWidth+1||el.scrollHeight>el.clientHeight+1)).map(()=>selector)));
+   expect(overflows).toEqual([]);
+ }
+});

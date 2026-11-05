@@ -136,6 +136,13 @@ Don't batch the whole AI turn into one render.
 
 ## 7. Prompt text (row 3)
 
+**WEB ADDITION:** a non-null `statusMessage` takes precedence in the same prompt
+area and uses the accent colour. A blocked opponent add before human laydown sets
+"Lay down your goal before adding cards to your opponent's formations." The add
+and formation-card controls can explain that restriction without permitting any
+card movement; their `aria-disabled` state remains true. See `docs/10` for message
+clearing behavior. The normal prompt rules below apply again once it clears.
+
 Evaluate top to bottom. **The first match wins.**
 
 | Condition | Text |
