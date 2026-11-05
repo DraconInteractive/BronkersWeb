@@ -74,6 +74,6 @@ Cards use fixed SVG suit silhouettes across devices, with round club lobes and a
 pointed spade. Corner pips are larger, especially on phones; compact centre pips
 leave room for the corners. Traditional red/black colours and card overlap remain.
 
-Portrait phone cards omit the decorative centre pip so it cannot merge with the
-larger corner pips. Landscape and desktop cards retain their centre pips, including
-when rotating a phone; the portrait rule also applies to the drag preview.
+Suit placement follows the card's role across all orientations: hand cards show
+only the top-left corner, including drag previews; discard cards show both corners
+and the centre pip; formation cards show both corners without a centre pip.
