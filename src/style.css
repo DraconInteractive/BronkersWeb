@@ -156,3 +156,9 @@ html, body { height: 100%; overflow: hidden; }
 
 .prompt.status-message { color: var(--gold); }
 .slot[aria-disabled=true]:not(:disabled), .table-card[aria-disabled=true]:not(:disabled) { cursor: help; }
+
+/* Portrait cards prioritise the exposed corner pips over a repeated centre pip. */
+@media (orientation: portrait) and (max-width: 900px) {
+  #app:not(.desktop) .card-face .center-suit,
+  .mobile-drag .card-face .center-suit { display: none; }
+}
