@@ -1,4 +1,4 @@
-import { Card, suitSymbols } from '../engine/card';
+import { Card } from '../engine/card';
 import { Game, Phase, LAY_DOWN_FIRST_MESSAGE } from '../engine/game';
 import type { Formation } from '../engine/formation';
 import { HandDrag } from './handDrag';
@@ -9,13 +9,31 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', 
 function button(label: string, className: string, action: () => void) {
   const el = element('button',className,label); el.type = 'button'; el.addEventListener('click',action); return el;
 }
+// Fixed vector silhouettes keep suits consistent across system fonts and phones.
+const suitShapes = [
+  '<path d="M12 22 3.2 13.2C-3 6.8 5.1-2.3 12 5.1 18.9-2.3 27 6.8 20.8 13.2Z"/>',
+  '<path d="M12 1 22 12 12 23 2 12Z"/>',
+  '<path d="M12 1C9 5.3 1 10.2 1 15.2c0 5.5 7.5 6.8 10 1.7-.2 2.6-1.1 4.3-3 6.1h8c-1.9-1.8-2.8-3.5-3-6.1 2.5 5.1 10 3.8 10-1.7C23 10.2 15 5.3 12 1Z"/>',
+  '<circle cx="12" cy="6" r="5"/><circle cx="6" cy="14" r="5"/><circle cx="18" cy="14" r="5"/><path d="M10 12h4c-1.2 5.1-.6 8.1 2 11H8c2.6-2.9 3.2-5.9 2-11Z"/>',
+];
+function suitIcon(card: Card, className: string) {
+  const icon = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  icon.setAttribute('class',className);
+  icon.setAttribute('viewBox','0 0 24 24');
+  icon.setAttribute('aria-hidden','true');
+  icon.setAttribute('focusable','false');
+  icon.innerHTML = suitShapes[card.suit];
+  return icon;
+}
 function cardFace(card: Card) {
   const face = element('span',`card-face ${card.suit < 2 ? 'red' : 'black'}`);
   for (const position of ['corner top','corner bottom']) {
     const corner = element('span',position);
-    corner.append(element('span','rank',card.label),element('span','suit',suitSymbols[card.suit])); face.append(corner);
+    corner.append(element('span','rank',card.label),suitIcon(card,'suit')); face.append(corner);
   }
-  face.append(element('span','center-suit',suitSymbols[card.suit]));
+  const center = element('span','center-suit');
+  center.append(suitIcon(card,'suit-art'));
+  face.append(center);
   return face;
 }
 export function mountApp(root: HTMLElement, game: Game) {

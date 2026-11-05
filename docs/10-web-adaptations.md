@@ -67,3 +67,9 @@ Mobile regression tests cover 320×480 through 428×926 portrait viewports and
 bounds, page through the complete hand, and assert that game regions do not
 overflow; merely hiding scrollbars does not satisfy these checks. Help notes may
 scroll when needed to keep their text readable.
+
+### Suit readability (2026-11-06)
+
+Cards use fixed SVG suit silhouettes across devices, with round club lobes and a
+pointed spade. Corner pips are larger, especially on phones; compact centre pips
+leave room for the corners. Traditional red/black colours and card overlap remain.
