@@ -2,7 +2,8 @@ import { Card } from './card';
 import { Deck } from './deck';
 import type { Formation } from './formation';
 import { Player } from './player';
-import { getCardScores, lowestCard, tryGetFormation, wantsDiscard } from './ai';
+import { getCardScores, lowestCard, wantsDiscard } from './ai';
+import { selectAIGoal, shelveAIPlan } from './aiGoals';
 import type { RNG } from './rng';
 export enum Phase { WaitForPickup, PlayerActions, SelectDiscard }
 export const LAY_DOWN_FIRST_MESSAGE = "Lay down your goal before adding cards to your opponent's formations.";
@@ -197,22 +198,13 @@ export class Game {
   async processAITurn() {
     if (this.disposed || this.paused) return;
     const p = this.players[this.activePlayer];
-    if (!p.goal) { const remaining = p.goals.filter(g => !g.completed); p.goal = remaining[Math.floor(this.rng()*remaining.length)]; this.changed(); }
+    if (!p.laidDown) { selectAIGoal(p); this.changed(); }
     await this.delay(800); if (this.disposed || this.paused) return;
     this.pickup(wantsDiscard(p,this.discardPile.at(-1)));
     await this.delay(800); if (this.disposed || this.paused) return;
     if (!p.laidDown) {
-      let shelved: boolean;
-      do {
-        shelved = false;
-        const ranked = [...getCardScores(p)].filter(([c]) => !c.isWild).sort((a,b) => b[1]-a[1]);
-        for (const [card] of ranked) {
-          const candidate = tryGetFormation(p,card);
-          if (!candidate) continue;
-          if (!p.goal!.formations.find(f => !f.cards.length && f.trySet(candidate))) continue;
-          p.removeCards(candidate); this.changed(); shelved = true; break;
-        }
-      } while (shelved);
+      const plan = selectAIGoal(p);
+      if (plan) { shelveAIPlan(p,plan,() => this.changed()); this.changed(); }
     } else {
       let added: boolean;
       do {

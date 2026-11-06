@@ -1,8 +1,36 @@
 # 03 — Opponent AI Specification (authoritative)
 
 The AI is player 1. `processAITurn()` runs whenever `nextPlayer()` makes player 1 active. It must
-behave identically to `MainWindow.ProcessAITurn` and its helpers, including tie-breaks, float precision
-and delays.
+follow the web goal-selection addition below. Pickup/discard scoring, laid-down table
+additions, and 800 ms turn delays retain the original behaviour.
+
+---
+
+## 0. Adaptive goal selection (web addition, 2026-11-06)
+
+Before pickup and again after drawing, assess every unfinished goal using the AI's
+hand plus its privately shelved cards. Completed goals are excluded. After laydown,
+the goal is locked for the rest of the round.
+
+A bounded search (24 retained allocations per depth) estimates the fewest missing
+cards by allocating disjoint partial sets/runs to the goal's slots. It explores
+both slot orders, run windows with aces low/high, duplicate physical cards, and
+wildcard allocation. A card is never counted in two groups. As in the original AI,
+a completed set needs at least two naturals and a completed run at least three;
+other legal, more wildcard-heavy formations are not planned in this first pass.
+This is an estimate rather than an exhaustive optimal solver.
+
+- Any immediately completable goal beats an incomplete goal; among ready goals,
+  prefer the greater reward.
+- Otherwise rank by `points / (missingCards + 1)^2`. The squared penalty balances
+  reward against distance, so a high reward does not automatically win.
+- Ties prefer fewer missing cards, then retain the current goal; remaining ties
+  use goal-sheet order. Selection is deterministic and consumes no random draws.
+- Switching returns all privately shelved cards before changing goal. After pickup,
+  rebuild the private slots using complete groups from the chosen allocation. This
+  can release a wildcard for another slot. Assessments themselves never mutate play.
+- Only existing hand/shelved cards are assessed; the AI cannot inspect the deck or
+  the human's cards. Pickup/discard scoring uses the chosen goal as before.
 
 ---
 
@@ -62,10 +90,7 @@ C# computes these in `float`. Reproduce like this:
 
 ```
 // 1. Goal selection
-if player.goal == null:
-    remaining = player.goals.filter(g => !g.completed)       // sheet order
-    player.goal = remaining[ floor(rng() * remaining.length) ]
-        // if remaining is empty the original throws IndexOutOfRange (see 08 Q1)
+if !player.laidDown: selectAIGoal(player)   // §0
 await delay(WAIT)
 
 // 2. Pickup decision
@@ -79,23 +104,10 @@ await delay(WAIT)
 
 // 3. Actions
 if player.laidDown == 0:
-    // 3a. Shelve formations into the goal (invisible to the human; the internal hand shrinks but the header stays at 13)
-    do:
-        shelved = false
-        ranked = [...getCardScores(player).entries()]
-                   .filter(([c]) => !c.isWild)
-                   .stableSortDescendingBy(([, s]) => s)
-                   .map(([c]) => c)
-        for card of ranked:
-            f = tryGetFormation(player, card)            // §3
-            if f == null: continue
-            target = player.goal.formations.find(fm => fm.cards.length == 0 && fm.trySet(f))
-                     // evaluated in formation order; trySet only mutates on success
-            if target == null: continue
-            player.removeCards(f)
-            shelved = true
-            break
-    while shelved
+    // 3a. Reassess after drawing, then shelve complete planned groups (§0).
+    plan = selectAIGoal(player)
+    shelveAIPlan(player, plan)
+    // Private slots and header remain concealed until laydown.
 else:
     // 3b. Already laid down: add to every laid-down formation on the table (own and others')
     do:
@@ -131,7 +143,7 @@ Notes:
   at pickup time, and the hypothetical with the discard has 14 minus the worst.
 - The AI lays down in the same turn it completes its goal (step 4). It does **not** add to the table in
   that turn. Adding (3b) only happens on turns that **start** already laid down.
-- The AI never changes its goal mid-round and never takes cards back from its slots.
+- Before laydown, the AI may change goals and reallocate cards in its private slots (§0).
 - When the AI has laid down, every empty-slot count is 0, so every natural scores 0 and every wild 10.
   The discard is then the **first non-wild card in hand order**, or the first wild if the hand is all wilds.
 - The AI can go out by discarding its last card (handled by `discard()` → `tryEndRound()`).
@@ -142,9 +154,11 @@ Notes:
 
 ---
 
-## 3. `tryGetFormation(player, card): Card[] | null`
+## 3. Legacy helper: `tryGetFormation(player, card): Card[] | null`
 
-Builds a candidate formation (for an **empty** goal slot) around `card` from the player's hand.
+Retained as an independently tested original helper. Adaptive shelving now uses the
+allocation from §0 instead. This helper builds a candidate formation (for an
+**empty** goal slot) around `card` from the player's hand.
 
 ```
 if card.isWild: return null

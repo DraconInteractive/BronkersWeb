@@ -7,7 +7,7 @@ Part B changes one.
 
 | # | Quirk | Where |
 |---|---|---|
-| A1 | **Points are never scored.** `points` is only shown on the goal sheet. There is no points total. The approved web addition now names the round winner in a results screen. | `02` §4 |
+| A1 | **Points are never scored.** `points` is shown on the goal sheet and, from 2026-11-06, weights adaptive AI goal selection. There is no points total. The approved web addition now names the round winner in a results screen. | `02` §4 |
 | A2 | Original: a fresh deal happened instantly. **Superseded 2026-11-05:** round results name who went out and wait for confirmation. | `02` §7.3 |
 | A3 | The **human always starts** every round. The dealer doesn't rotate. | `02` §7.2 |
 | A4 | Original: `statusMessage` was always null. **Superseded:** blocked opponent adds now show a lay-down-first explanation in the prompt area. | `05` §7 |

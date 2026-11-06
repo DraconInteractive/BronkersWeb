@@ -2,7 +2,7 @@
 
 The user approved browser-based play on iOS, Android, and Windows, including
 responsive layouts and touch equivalents for keyboard controls. These are UI
-additions; formation validation, turn timing, AI, and goal progression retain
+additions; formation validation, turn timing, and goal progression retain
 the original behavior.
 
 - **Desktop:** the 1280×720 table scales uniformly to fit the viewport. The felt
@@ -77,3 +77,13 @@ leave room for the corners. Traditional red/black colours and card overlap remai
 Suit placement follows the card's role across all orientations: hand cards show
 only the top-left corner, including drag previews; discard cards show both corners
 and the centre pip; formation cards show both corners without a centre pip.
+
+### Adaptive opponent goals (2026-11-06)
+
+Before pickup and after drawing, the AI reassesses unfinished goals against its
+hand and private formations, weighting reward points by estimated missing cards.
+It prefers an immediate laydown, can change goals and reallocate shelved cards,
+and locks the chosen goal once laid down. Search is bounded for phone performance
+and never reuses one card across multiple formations. See `03` §0 for scoring,
+limits, and tie-breaks. Reward points guide decisions but do not introduce a score
+total or change game-winning rules.
