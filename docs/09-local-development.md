@@ -69,3 +69,36 @@ and button-click checks. Playwright reports these missing host libraries for
 WebKit: `libgstgl-1.0.so.0`, `libgstcodecparsers-1.0.so.0`, and
 `libmanette-0.2.so.0`. WebKit automation is not ready; no system packages were
 installed. Actual iOS testing can be performed manually for now.
+
+## Automated AI trials
+
+Run repeatable, independent opening rounds using the actual production AI for both
+seats, with animation delays skipped:
+
+```sh
+./scripts/with-node npm run simulate:ai -- --rounds 1000 --seed 1 --output reports/ai/reward-1.5-1000-first-rounds
+```
+
+The default mode is 1,000 independent opening rounds. Each trial creates a fresh game with all ten goals available to both players and
+stops at its first round result. Completed goals from one trial never carry into
+the next. This is the preferred mode for measuring goal selection without the
+influence of locked goals later in a match.
+
+The runner writes a Markdown report, goal-distribution CSV, and raw per-trial JSON.
+It records laydowns when they happen (not just the winning player's goal), personal
+turns until laydown, first laydown per round, completed/capped trials, and available
+goals. It checks all 104 physical cards after every turn. Seeds and the engine
+commit are recorded for reproduction. Self-play is a diagnostic and does not
+predict results against a human.
+
+The default limit is 500 individual player turns per round; change it with
+`--max-round-turns`. Hitting a limit is reported explicitly; observed laydowns are
+retained, but a capped trial is never counted as completed.
+
+For a separate test of progression through an entire game, use `--matches 100`
+instead of `--rounds 1000`. Full-match mode automatically confirms round results
+and caps each match at 100 rounds. It is unsuitable for measuring unrestricted
+goal preference because previously completed goals become unavailable. Neither
+mode changes the game rules or AI weights.
+
+Recorded baseline: [1,000 independent rounds with reward exponent 1.5](../reports/ai/reward-1.5-1000-first-rounds.md).
