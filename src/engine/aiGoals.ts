@@ -10,9 +10,10 @@ const size = (kind: Group['kind']) => kind === 'Set' ? 3 : 4;
 
 // Bound the search so reassessment stays cheap on phones. Different slot orders
 // and wildcard allocations compete; no card can contribute to two formations.
-// Reward exponent is the tuning knob: 1.5 gives ambitious goals more influence
-// without removing the penalty for cards still missing. No completion bonus.
-const REWARD_EXPONENT = 1.5;
+// Selection weights tune goal preference; displayed goal points stay fixed.
+// The small three-run boost balances the two ten-point goals. No completion bonus.
+const REWARD_EXPONENT = 1.65;
+const THREE_RUN_REWARD_MULTIPLIER = 1.05;
 const SEARCH_WIDTH = 24;
 function candidates(hand: Card[], kind: Group['kind']): Card[][] {
   const wild = hand.find(c => c.isWild);
@@ -78,7 +79,7 @@ export function assessGoals(player: Player, availableCards?: readonly Card[]): G
     }
     const best = plans[0];
     const missing = sets*3+runs*4-best.used;
-    return {goal,missing,score:goal.points**REWARD_EXPONENT/(missing+1),groups:best.groups};
+    return {goal,missing,score:goal.points**REWARD_EXPONENT*(goal.name === '3R' ? THREE_RUN_REWARD_MULTIPLIER : 1)/(missing+1),groups:best.groups};
   });
 }
 

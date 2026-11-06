@@ -39,7 +39,7 @@ test('a ready low-reward goal gets no priority over a better weighted incomplete
   const assessments = assessGoals(p);
   expect(assessments.map(a => a.missing)).toEqual([0,1]);
   expect(assessments[0].score).toBe(1);
-  expect(assessments[1].score).toBeCloseTo(5**1.5/2);
+  expect(assessments[1].score).toBeCloseTo(5**1.65/2);
   expect(selectAIGoal(p)!.goal.name).toBe('2S 1R');
 });
 
@@ -48,8 +48,8 @@ test('linear distance penalty pursues an 8-point goal over a ready 5-point goal'
   const assessments = assessGoals(p);
   expect(assessments.map(a => a.missing)).toEqual([0,1]);
   // The previous squared distance penalty preferred the ready 5-point goal.
-  expect(8**1.5/2**2).toBeLessThan(5**1.5);
-  expect(assessments[1].score).toBeCloseTo(8**1.5/2);
+  expect(8**1.65/2**2).toBeLessThan(5**1.65);
+  expect(assessments[1].score).toBeCloseTo(8**1.65/2);
   expect(assessments[1].score).toBeGreaterThan(assessments[0].score);
   expect(selectAIGoal(p)!.goal.name).toBe('3S 1R');
 });
@@ -118,4 +118,13 @@ test('reassesses after pickup and lays down the new goal during the same turn', 
   await g.processAITurn();
   expect(p.goal).toBe(p.goals[3]); expect(p.laidDown).toBe(true);
   expect(p.goal!.completed).toBe(true); expect(g.activePlayer).toBe(0);
+});
+
+
+test('three-run selection boost leaves actual reward points unchanged', () => {
+  const p = player('',[8,9]);
+  const assessments = assessGoals(p);
+  expect(assessments.map(a => a.goal.points)).toEqual([10,10]);
+  expect(assessments[0].score).toBeCloseTo(10**1.65*1.05/13);
+  expect(assessments[1].score).toBeCloseTo(10**1.65/15);
 });

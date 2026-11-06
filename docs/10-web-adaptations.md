@@ -82,8 +82,9 @@ and the centre pip; formation cards show both corners without a centre pip.
 
 Before pickup and after drawing, the AI reassesses unfinished goals against its
 hand and private formations, weighting reward points by estimated missing cards.
-All goals use `points^1.5 / (missingCards + 1)` without an immediate-completion
-bonus or priority. It can change goals and reallocate shelved cards, and locks
+All goals use `points^1.65 * goalWeight / (missingCards + 1)` without an immediate-completion
+bonus or priority. `goalWeight` is 1.05 for 3R and 1 otherwise, targeting a modest
+increase in ten-point laydowns without changing actual goal points. It can change goals and reallocate shelved cards, and locks
 the chosen goal once laid down. Search is bounded for phone performance
 and never reuses one card across multiple formations. See `03` §0 for scoring,
 limits, and tie-breaks. Reward points guide decisions but do not introduce a score

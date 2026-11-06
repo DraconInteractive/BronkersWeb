@@ -117,3 +117,10 @@ the engine commit recorded in that report.
 
 Goal-aligned pickup/discard experiment: [paired comparison](../reports/ai/goal-aligned-decisions-comparison.md),
 using the same 1,000 opening-round seeds and unchanged linear goal scoring.
+
+For calibration, `--reward-exponent 1.65 --three-run-weight 1.05` overrides those
+constants only in the headless module loader. The locally served game and source
+files are unaffected by experimental overrides. Reports record actual loaded
+weights, and both the coordinator and workers validate the configuration. Workers
+receive all CLI arguments, including round limits and mode. Generated goal tables
+also include round wins, median turns, and turn ranges.

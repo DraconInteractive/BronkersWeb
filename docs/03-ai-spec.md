@@ -20,9 +20,11 @@ a completed set needs at least two naturals and a completed run at least three;
 other legal, more wildcard-heavy formations are not planned in this first pass.
 This is an estimate rather than an exhaustive optimal solver.
 
-- Rank every goal by `points^1.5 / (missingCards + 1)`, with no bonus or priority
-  for immediate completion. The reward exponent was increased from 1 to 1.5
-  after local play showed too much preference for easy goals. The distance penalty
+- Rank every goal by `points^1.65 * goalWeight / (missingCards + 1)`, with no bonus or priority
+  for immediate completion. `goalWeight` is 1.05 for 3R and 1 for every other
+  goal. The exponent was increased from 1.5 to 1.65, with the small 3R boost,
+  to move both ten-point goals toward an 8–10% share of laydowns. Displayed
+  goal points and actual game rules are unchanged. The distance penalty
   is now linear, rather than squared, to give higher-reward goals more time to develop.
 - Ties prefer fewer missing cards, then retain the current goal; remaining ties
   use goal-sheet order. Selection is deterministic and consumes no random draws.
@@ -37,8 +39,9 @@ This is an estimate rather than an exhaustive optimal solver.
 ## 0.1. Pickup and discard aligned with goal assessment
 
 Before laydown, both decisions use the same disjoint allocation search and
-`points^1.5 / (missingCards + 1)` score as goal selection. No weights or completion
-bonuses change in this experiment.
+`points^1.65 * goalWeight / (missingCards + 1)` score as goal selection. No weights or completion
+bonuses change in the pickup/discard experiment; later selection-weight tuning
+uses the same assessment consistently for all decisions.
 
 - **Pickup:** compare the current best goal score with the best score including
   the visible discard, allowing for the subsequent compulsory discard. Take the
