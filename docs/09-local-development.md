@@ -127,3 +127,21 @@ receive all CLI arguments, including round limits and mode. Generated goal table
 also include round wins, median turns, and turn ranges.
 
 Current ten-point tuning: [comparison and calibration](../reports/ai/ten-point-calibration-comparison.md), with [full per-goal statistics](../reports/ai/tuned-ten-point-goals-1000-first-rounds.md).
+
+## Two-policy AI evaluation
+
+The current improved policy and the frozen `d64208e` baseline can share the same
+game rules without sharing private information. Run the requested 2,000-round
+protocol as two distinct stages:
+
+```sh
+./scripts/with-node npm run simulate:ai -- --rounds 1000 --seed 1 --policy improved --opponent baseline --alternate-start --workers 3 --output reports/ai/availability-new-v-old-1000
+./scripts/with-node npm run simulate:ai -- --rounds 1000 --seed 1001 --policy improved --opponent improved --alternate-start --workers 3 --output reports/ai/availability-new-v-new-1000
+```
+
+Policies stay in their named seats; the starter alternates globally, including
+across worker boundaries. JSON includes the actual starter/policy in every round,
+per-policy goal statistics and abandoned pursuits. Per-policy CSVs are written
+alongside the combined CSV. The frozen snapshot and shared rules are hash-checked.
+See [the AI backlog](13-ai-improvements-and-backlog.md) for delivered and deferred
+work and the interpretation of pursuit exposure.

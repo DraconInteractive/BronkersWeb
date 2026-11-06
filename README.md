@@ -96,6 +96,7 @@ migration from the existing tar installation. Caddy keeps using port 43187 and
 | [docs/08-quirks-and-open-questions.md](docs/08-quirks-and-open-questions.md) | Odd but faithful behaviour, decisions taken, and remaining defaults |
 | [docs/09-local-development.md](docs/09-local-development.md) | Workspace-local tools, development commands, and browser testing limitations |
 | [docs/10-web-adaptations.md](docs/10-web-adaptations.md) | Approved responsive layouts, touch controls, and accessibility additions |
+| [docs/13-ai-improvements-and-backlog.md](docs/13-ai-improvements-and-backlog.md) | Delivered AI improvements, frozen baseline, two-stage benchmark and deferred work |
 
 ## Reference material
 

@@ -111,3 +111,12 @@ The last card in hand order shows both corner pips on portrait/compact layouts.
 Desktop and landscape viewports at least 768px wide also show its centre pip.
 Other hand cards remain left-only. The exception follows draws, discards and
 reordering, including the drag preview; formation and discard roles are unchanged.
+
+### Availability and round-exit AI policy
+
+The current AI evaluates public draw availability and the cards it will still
+need to clear after laydown. It recognises proven legal exits, compares ready
+layouts by their leftovers, can add to tables immediately after committing, and
+can pick up known playable natural cards after laydown. The game rules and human
+permissions are unchanged. The previous policy is frozen for head-to-head testing.
+See `03` §0.2 and the delivered/deferred work in `13`.

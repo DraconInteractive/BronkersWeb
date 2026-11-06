@@ -3,8 +3,8 @@ import type { Goal } from './goal';
 import type { Player } from './player';
 import type { Formation } from './formation';
 
-type Group = { kind: Formation['kind']; cards: Card[] };
-export type GoalAssessment = { goal: Goal; missing: number; score: number; groups: Group[] };
+export type Group = { kind: Formation['kind']; cards: Card[] };
+export type GoalAssessment = { goal: Goal; missing: number; score: number; groups: Group[]; expectedDraws?: number; riskDistance?: number; usefulOuts?: number[]; immediateWin?: boolean; exitCards?: number; finishCost?: number };
 type Plan = { remaining: Card[]; sets: number; runs: number; groups: Group[]; used: number; complete: number };
 const size = (kind: Group['kind']) => kind === 'Set' ? 3 : 4;
 
@@ -41,7 +41,7 @@ function candidates(hand: Card[], kind: Group['kind']): Card[][] {
   return groups;
 }
 
-export function assessGoals(player: Player, availableCards?: readonly Card[]): GoalAssessment[] {
+export function assessGoals(player: Player, availableCards?: readonly Card[], planCost?: (groups: readonly Group[]) => number): GoalAssessment[] {
   if (player.laidDown) return [];
   const hand = availableCards ? [...availableCards] : availableAICards(player);
   const indices = new Map(hand.map((card,i) => [card,i]));
@@ -79,7 +79,7 @@ export function assessGoals(player: Player, availableCards?: readonly Card[]): G
       }
       plans = [...next.values()].sort((a,b) => b.used-a.used || b.complete-a.complete).slice(0,SEARCH_WIDTH);
     }
-    const best = plans[0];
+    const best = planCost ? plans.reduce((a,b) => planCost(b.groups) < planCost(a.groups) ? b : a) : plans[0];
     const missing = sets*3+runs*4-best.used;
     return {goal,missing,score:goal.points**REWARD_EXPONENT*(goal.name === '3R' ? THREE_RUN_REWARD_MULTIPLIER : 1)/(missing+MISSING_CARD_OFFSET),groups:best.groups};
   });

@@ -1,0 +1,1096 @@
+[
+  {
+    "seed": 1,
+    "round": {
+      "number": 1,
+      "turns": 11,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 11,
+          "personalTurn": 6,
+          "cardsRemaining": 1
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "2S 2R": 4,
+        "3R": 5,
+        "3S 1R": 1
+      },
+      "targetChanges": 1
+    }
+  },
+  {
+    "seed": 2,
+    "round": {
+      "number": 1,
+      "turns": 8,
+      "winner": 1,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 7,
+          "personalTurn": 4,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 1,
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 8,
+          "personalTurn": 4,
+          "cardsRemaining": 1
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "1S 2R": 1,
+        "2S 2R": 1,
+        "3R": 2,
+        "3S 1R": 2
+      },
+      "targetChanges": 4
+    }
+  },
+  {
+    "seed": 3,
+    "round": {
+      "number": 1,
+      "turns": 19,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 1,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 8,
+          "personalTurn": 4,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 15,
+          "personalTurn": 8,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3S 1R": 1,
+        "3R": 3,
+        "2S 2R": 1,
+        "1S 2R": 5
+      },
+      "targetChanges": 3
+    }
+  },
+  {
+    "seed": 4,
+    "round": {
+      "number": 1,
+      "turns": 14,
+      "winner": 1,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 1,
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 14,
+          "personalTurn": 7,
+          "cardsRemaining": 1
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3S 1R": 11,
+        "2S 2R": 2
+      },
+      "targetChanges": 1
+    }
+  },
+  {
+    "seed": 5,
+    "round": {
+      "number": 1,
+      "turns": 17,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 17,
+          "personalTurn": 9,
+          "cardsRemaining": 1
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3R": 14,
+        "2S 2R": 2
+      },
+      "targetChanges": 2
+    }
+  },
+  {
+    "seed": 6,
+    "round": {
+      "number": 1,
+      "turns": 19,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 17,
+          "personalTurn": 9,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3R": 8,
+        "2S 2R": 5,
+        "3S 1R": 4
+      },
+      "targetChanges": 2
+    }
+  },
+  {
+    "seed": 7,
+    "round": {
+      "number": 1,
+      "turns": 18,
+      "winner": 1,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 11,
+          "personalTurn": 6,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 1,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 14,
+          "personalTurn": 7,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3R": 5,
+        "1S 2R": 3,
+        "2S 2R": 3
+      },
+      "targetChanges": 4
+    }
+  },
+  {
+    "seed": 8,
+    "round": {
+      "number": 1,
+      "turns": 13,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 1,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 10,
+          "personalTurn": 5,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 11,
+          "personalTurn": 6,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "1S 2R": 8,
+        "2S 2R": 1
+      },
+      "targetChanges": 2
+    }
+  },
+  {
+    "seed": 9,
+    "round": {
+      "number": 1,
+      "turns": 25,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 11,
+          "personalTurn": 6,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 1,
+          "goal": "3R",
+          "points": 10,
+          "turn": 20,
+          "personalTurn": 10,
+          "cardsRemaining": 2
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3R": 14
+      },
+      "targetChanges": 1
+    }
+  },
+  {
+    "seed": 10,
+    "round": {
+      "number": 1,
+      "turns": 18,
+      "winner": 1,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 9,
+          "personalTurn": 5,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 1,
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 18,
+          "personalTurn": 9,
+          "cardsRemaining": 1
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "2S 2R": 4,
+        "3S 1R": 7,
+        "1S 2R": 1
+      },
+      "targetChanges": 4
+    }
+  },
+  {
+    "seed": 11,
+    "round": {
+      "number": 1,
+      "turns": 11,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 11,
+          "personalTurn": 6,
+          "cardsRemaining": 1
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3S 1R": 3,
+        "2S 2R": 7
+      },
+      "targetChanges": 4
+    }
+  },
+  {
+    "seed": 12,
+    "round": {
+      "number": 1,
+      "turns": 15,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 1,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 6,
+          "personalTurn": 3,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 0,
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 15,
+          "personalTurn": 8,
+          "cardsRemaining": 1
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "2S 2R": 5,
+        "3R": 2,
+        "3S 1R": 2
+      },
+      "targetChanges": 3
+    }
+  },
+  {
+    "seed": 13,
+    "round": {
+      "number": 1,
+      "turns": 28,
+      "winner": 1,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 15,
+          "personalTurn": 8,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 1,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 20,
+          "personalTurn": 10,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3R": 16
+      },
+      "targetChanges": 2
+    }
+  },
+  {
+    "seed": 14,
+    "round": {
+      "number": 1,
+      "turns": 25,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 23,
+          "personalTurn": 12,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "2S 2R": 5,
+        "1S 2R": 18
+      },
+      "targetChanges": 3
+    }
+  },
+  {
+    "seed": 15,
+    "round": {
+      "number": 1,
+      "turns": 28,
+      "winner": 1,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 1,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 14,
+          "personalTurn": 7,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3R": 15,
+        "2S 2R": 3,
+        "1S 2R": 2
+      },
+      "targetChanges": 4
+    }
+  },
+  {
+    "seed": 16,
+    "round": {
+      "number": 1,
+      "turns": 21,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 1,
+          "goal": "3R",
+          "points": 10,
+          "turn": 18,
+          "personalTurn": 9,
+          "cardsRemaining": 2
+        },
+        {
+          "seat": 0,
+          "goal": "2S 2R",
+          "points": 10,
+          "turn": 21,
+          "personalTurn": 11,
+          "cardsRemaining": 0
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "2S 2R": 10,
+        "3R": 8
+      },
+      "targetChanges": 1
+    }
+  },
+  {
+    "seed": 17,
+    "round": {
+      "number": 1,
+      "turns": 7,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 1,
+          "personalTurn": 1,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "2S 2R": 3
+      },
+      "targetChanges": 1
+    }
+  },
+  {
+    "seed": 18,
+    "round": {
+      "number": 1,
+      "turns": 22,
+      "winner": 1,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 17,
+          "personalTurn": 9,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 1,
+          "goal": "2S 2R",
+          "points": 10,
+          "turn": 22,
+          "personalTurn": 11,
+          "cardsRemaining": 0
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "3R": 9,
+        "1S 2R": 6,
+        "2S 2R": 3
+      },
+      "targetChanges": 3
+    }
+  },
+  {
+    "seed": 19,
+    "round": {
+      "number": 1,
+      "turns": 18,
+      "winner": 1,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 1,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 6,
+          "personalTurn": 3,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 0,
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 17,
+          "personalTurn": 9,
+          "cardsRemaining": 3
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {
+        "2S 2R": 3,
+        "3R": 2,
+        "1S 2R": 5
+      },
+      "targetChanges": 3
+    }
+  },
+  {
+    "seed": 20,
+    "round": {
+      "number": 1,
+      "turns": 1,
+      "winner": 0,
+      "status": "completed",
+      "laydowns": [
+        {
+          "seat": 0,
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 1,
+          "personalTurn": 1,
+          "cardsRemaining": 1
+        }
+      ],
+      "available": [
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ],
+        [
+          "2S",
+          "3S",
+          "1S 1R",
+          "2R",
+          "2S 1R",
+          "4S",
+          "3S 1R",
+          "1S 2R",
+          "3R",
+          "2S 2R"
+        ]
+      ],
+      "targetTurns": {},
+      "targetChanges": 0
+    }
+  }
+]

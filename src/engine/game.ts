@@ -2,8 +2,9 @@ import { Card } from './card';
 import { Deck } from './deck';
 import type { Formation } from './formation';
 import { Player } from './player';
-import { chooseAIDiscard, shouldPickUpDiscard } from './aiDecisions';
-import { selectAIGoal, shelveAIPlan, type GoalAssessment } from './aiGoals';
+import { improvedAI, type AIPolicy } from './aiPolicy';
+import type { AIKnowledge } from './aiKnowledge';
+import type { GoalAssessment } from './aiGoals';
 import type { RNG } from './rng';
 export enum Phase { WaitForPickup, PlayerActions, SelectDiscard }
 export const LAY_DOWN_FIRST_MESSAGE = "Lay down your goal before adding cards to your opponent's formations.";
@@ -27,7 +28,7 @@ export class Game {
   private listeners = new Set<() => void>();
   private disposed = false;
   aiTask: Promise<void> | null = null;
-  constructor(public rng: RNG = Math.random, private delay: Scheduler = ms => new Promise(r => setTimeout(r,ms))) {
+  constructor(public rng: RNG = Math.random, private delay: Scheduler = ms => new Promise(r => setTimeout(r,ms)), readonly aiPolicies: readonly AIPolicy[] = []) {
     this.deck = new Deck(rng); this.setupRound();
   }
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
@@ -195,37 +196,43 @@ export class Game {
     }
     return ['Opponent is picking up...', 'Opponent is taking their actions...', 'Opponent is discarding...'][this.phase];
   }
+  aiKnowledge(player: Player): AIKnowledge {
+    const table=this.players.flatMap(p=>p.laidDown ? p.goal?.formations ?? [] : []);
+    return {knownCards:[...player.hand,...(player.goal?.formations.flatMap(f=>f.cards)??[]),...this.discardPile,...table.flatMap(f=>f.cards)],
+      table,hasDrawn:this.phase!==Phase.WaitForPickup};
+  }
+  private playAITables(player: Player, policy: AIPolicy) {
+    const plan=policy.table(player,this.aiKnowledge(player));
+    for (const move of plan.moves) {
+      if (!player.hand.includes(move.card)) throw Error('AI planned a card not in hand');
+      const result=move.formation.tryAdd(move.card);
+      if (!result.ok) throw Error('AI planned an illegal table move');
+      player.removeCards([move.card]);player.takeCards(result.swapped);this.changed();
+    }
+    return this.tryEndRound();
+  }
   async processAITurn() {
     if (this.disposed || this.paused) return;
     const p = this.players[this.activePlayer];
+    const policy=this.aiPolicies[this.activePlayer] ?? improvedAI;
     let plan: GoalAssessment | null = null;
-    if (!p.laidDown) { plan = selectAIGoal(p); this.changed(); }
+    if (!p.laidDown) { plan = policy.selectGoal(p,this.aiKnowledge(p)); this.changed(); }
     await this.delay(800); if (this.disposed || this.paused) return;
-    this.pickup(shouldPickUpDiscard(p,this.discardPile.at(-1),plan));
+    this.pickup(policy.pickup(p,this.aiKnowledge(p),this.discardPile.at(-1),plan));
     await this.delay(800); if (this.disposed || this.paused) return;
     if (!p.laidDown) {
-      plan = selectAIGoal(p);
-      if (plan) { shelveAIPlan(p,plan,() => this.changed()); this.changed(); }
+      plan = policy.selectGoal(p,this.aiKnowledge(p));
+      if (plan) { policy.shelve(p,plan,() => this.changed()); this.changed(); }
     } else {
-      let added: boolean;
-      do {
-        added = false;
-        for (const other of this.players) {
-          if (!other.goal || !other.laidDown) continue;
-          for (const f of other.goal.formations) for (const c of [...p.hand]) {
-            const result = f.tryAdd(c); if (!result.ok) continue;
-            p.removeCards([c]); p.takeCards(result.swapped); this.changed(); added = true;
-          }
-        }
-      } while (added);
-      if (this.tryEndRound()) return;
+      if (this.playAITables(p,policy)) return;
     }
     const wentOut = !p.hand.length;
-    p.refreshCanLayDown(); this.tryLayDown(p);
-    if (wentOut) return;
+    p.refreshCanLayDown(); const justLaid=this.tryLayDown(p);
+    if (wentOut || this.paused) return;
+    if (justLaid && policy.addAfterLaydown && this.playAITables(p,policy)) return;
     this.finishActions();
     await this.delay(800); if (this.disposed || this.paused) return;
-    this.discard(p,chooseAIDiscard(p,plan));
+    this.discard(p,policy.discard(p,this.aiKnowledge(p),plan));
     await this.delay(800);
   }
 }

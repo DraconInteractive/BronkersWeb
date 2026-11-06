@@ -1,8 +1,9 @@
 # 03 — Opponent AI Specification (authoritative)
 
 The AI is player 1. `processAITurn()` runs whenever `nextPlayer()` makes player 1 active. It must
-follow the web goal-selection and pickup/discard additions below. Laid-down table
-additions, endgame card scoring, and 800 ms turn delays retain the original behaviour.
+use the improved availability/going-out policy in §0.2. Sections 0 and 0.1
+describe the calibrated base assessment, which remains the frozen comparison policy.
+The game keeps its 800 ms stage delays; simulations inject an immediate scheduler.
 
 ---
 
@@ -67,6 +68,45 @@ uses the same assessment consistently for all decisions.
 
 ---
 
+## 0.2. Improved availability and going-out policy
+
+Production uses `improvedAI` through the per-seat policy interface. The reference
+policy at d64208e is immutable under `tests/ai-baseline` and is loaded only by tests.
+Both use the same card rules and engine; baseline goal selection, pickup/discard,
+shelving and table order stay frozen.
+
+For every partial group, count unseen useful natural copies and wilds using own
+cards, currently exposed formations and the discard pile. Deduplicate observed
+physical cards. Open runs have more useful draws than inside gaps; aces can be
+low or high. The estimated unseen pool includes opponents' unknown cards, so this
+is not an exact deck probability. No private opponent cards or deck contents are
+passed to the policy. The risk distance is the sum of each group's missing count
+multiplied by `max(1, 12 / (usefulOuts + 1))`. Rough expected-draw diagnostics are
+recorded separately. Among the beam's candidates, choose the lower-risk allocation.
+
+The final cost also includes `0.35 * exitCards`: estimated unplayable cards after
+laydown and the final discard. Before a goal is complete, use a conservative
+`max(0, 14 - goalSize - 1)` estimate. For a complete goal, dry-run legal table
+additions on clones to compute actual leftovers. Among complete layouts for the
+same goal, prefer the one that sheds the most leftovers. The reward numerator
+remains the calibrated one from §0; there is no formation-completion bonus.
+
+A **proven round exit** through legal laydown/table additions/final discard takes
+priority over chasing reward. Before pickup, the AI does not assume an unknown
+extra card is playable. Once laid down, natural-first legal table plans and known
+playable discard pickups are used. New AI may add immediately after laying down,
+just as the human can. The old baseline deliberately preserves its old wait-until-
+next-turn behaviour. Two dry-run table move orders are compared; neither mutates
+real cards. Moves are applied through the normal validators and ownership checks.
+
+Pickup and discard use the same improved assessment, with a retained-plan shortcut
+for unused cards. Equivalent-target retention now compares the combined draw and
+finishing costs, not raw missing counts alone. All speculative evaluation is
+read-only. Full memory of past public observations and deeper search are deferred
+in [13-ai-improvements-and-backlog.md](13-ai-improvements-and-backlog.md).
+
+---
+
 ## 1. Legacy/endgame card scoring: `getCardScores(player, discard?: Card): Map<Card, float>`
 
 Returns an **insertion-ordered** map (JS `Map` keyed by card object). Insertion order is a tie-break
@@ -124,19 +164,19 @@ C# computes these in `float`. Reproduce like this:
 ```
 // 1. Goal selection
 plan = null
-if !player.laidDown: plan = selectAIGoal(player)   // §0
+if !player.laidDown: plan = policy.selectGoal(player, publicKnowledge)
 await delay(WAIT)
 
 // 2. Pickup decision
-if shouldPickUpDiscard(player, discardPile[last], plan): pickupFromDiscard()
+if policy.pickup(player, publicKnowledge, discardPile[last], plan): pickupFromDiscard()
 else: pickup()
 await delay(WAIT)
 
 // 3. Actions
 if player.laidDown == 0:
     // 3a. Reassess after drawing, then shelve complete planned groups (§0).
-    plan = selectAIGoal(player)
-    shelveAIPlan(player, plan)
+    plan = policy.selectGoal(player, publicKnowledge)
+    policy.shelve(player, plan)
     // Private slots and header remain concealed until laydown.
 else:
     // 3b. Already laid down: add to every laid-down formation on the table (own and others')
@@ -158,12 +198,13 @@ else:
 wentOut = player.hand.length == 0
 player.refreshCanLayDown()
 tryLayDown(player)                     // may end the round (and deal a new one) if hand is empty
-if wentOut: return
+if wentOut OR paused: return
+if justLaidDown AND policy.addAfterLaydown: apply validated policy.table moves; check round end
 finishActions()                        // phase = SelectDiscard
 await delay(WAIT)
 
 // 5. Discard
-discard(player, chooseAIDiscard(player, plan))   // §0.1; legacy scoring after laydown
+discard(player, policy.discard(player, publicKnowledge, plan))
 await delay(WAIT)                      // no effect: discard() already passed the turn
 ```
 
@@ -171,8 +212,8 @@ Notes:
 - Pickup normally compares 13 retained cards against 13 after taking the visible
   discard and removing a legal card. A complete goal consuming all 14 can end the
   round without a discard; its full allocation is allowed (§0.1).
-- The AI lays down in the same turn it completes its goal (step 4). It does **not** add to the table in
-  that turn. Adding (3b) only happens on turns that **start** already laid down.
+- The baseline waits until the next turn to add after laydown. Improved AI can
+  add as soon as it commits (§0.2). Both use the same legal formation rules.
 - Before laydown, the AI may change goals and reallocate cards in its private slots (§0).
 - When the AI has laid down, every empty-slot count is 0, so every natural scores 0 and every wild 10.
   The discard is then the **first non-wild card in hand order**, or the first wild if the hand is all wilds.

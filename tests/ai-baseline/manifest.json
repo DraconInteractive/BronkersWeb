@@ -1,0 +1,34 @@
+{
+  "revision": "d64208e03883edb7de85e9fde9675d6605969498",
+  "scope": "AI policy snapshot before improved availability/tactical policy; shared game rules remain production rules",
+  "files": {
+    "src/engine/ai.ts": {
+      "sha256": "36ff4441aa270403ac9541873eb3c71118285f53ccc4b2c732c06f2c2e3c6b9e"
+    },
+    "src/engine/aiGoals.ts": {
+      "sha256": "5c89eb25a5915497c3eb523cbecdb1cfb65dcac4d3d5b874f60c0dba62d5534f"
+    },
+    "src/engine/aiDecisions.ts": {
+      "sha256": "265216eacc748acaa867400289abf57907e42c9098403ad7996552e5738c11c0"
+    },
+    "src/engine/game.ts": {
+      "sha256": "20af91991854fb4eeb6c95907bf42fe8b13b608d475f06a8a0ecb40b616e481e",
+      "note": "Turn order/add-after-laydown behaviour captured by baseline policy adapter"
+    }
+  },
+  "snapshotFiles": {
+    "tests/ai-baseline/ai.ts": "ca20231099333368228578000d195624eeebbc261871c4a7e23323a12c243a5b",
+    "tests/ai-baseline/aiDecisions.ts": "4b698d8f092dc5b785859d456af3bef5e2ead5d4a91d7519060aae10d2b0802d",
+    "tests/ai-baseline/aiGoals.ts": "5c3214462fab419fa4ccd298389bba4705b622884b9d83ee3c25d15f816d2cc0",
+    "tests/ai-baseline/policy.ts": "8dc3e68b34c9509a463db7926b871a948aa82896925cff39090f643f144d859d",
+    "tests/ai-baseline/control.json": "c84d1d2b260209d9ebd3dc208b3d76a6045d0392dc3b2972bcde814b92f890ac"
+  },
+  "sharedRules": {
+    "src/engine/card.ts": "bc1337898fc4d23dfe1ef56055f72daef939b8775447299261f6c62a85065f63",
+    "src/engine/deck.ts": "316948f11acb0d8500bf48736dc097293486bbdee418df791efb9c5899eb01ac",
+    "src/engine/formation.ts": "b8f01d3213ae6e1a92c9e7624da33d22999d00fc12ac70a76f15cd5a096f76ff",
+    "src/engine/goal.ts": "c9ffb34001305679d5fb709143b58fadc77cfdf978e34ead44807f26d51f71cf",
+    "src/engine/player.ts": "e3c668487a610f5433e920d4a1d840d75276ce13677aa1832efe3060e14c8f1f",
+    "src/engine/rng.ts": "00cda016d5de66179d26daf796e36b3db647ed3b3dfd71f24150de6cfc07c1d2"
+  }
+}
