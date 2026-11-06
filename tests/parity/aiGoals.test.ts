@@ -32,9 +32,12 @@ test('weights missing cards by reward points instead of always picking the easie
   expect(selectAIGoal(p)!.goal.name).toBe('1S 1R');
 });
 
-test('takes an immediate laydown ahead of a higher-reward incomplete goal', () => {
+test('a ready low-reward goal gets no priority over a better weighted incomplete goal', () => {
   const p = player('5H 5S 5D 8H 8S 8D 3C 4C 5C',[0,4]);
-  expect(selectAIGoal(p)!.goal.name).toBe('2S');
+  const assessments = assessGoals(p);
+  expect(assessments.map(a => a.missing)).toEqual([0,1]);
+  expect(assessments.map(a => a.score)).toEqual([1,1.25]);
+  expect(selectAIGoal(p)!.goal.name).toBe('2S 1R');
 });
 
 test('does not count one physical card in both a set and a run', () => {

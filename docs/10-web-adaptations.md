@@ -82,8 +82,9 @@ and the centre pip; formation cards show both corners without a centre pip.
 
 Before pickup and after drawing, the AI reassesses unfinished goals against its
 hand and private formations, weighting reward points by estimated missing cards.
-It prefers an immediate laydown, can change goals and reallocate shelved cards,
-and locks the chosen goal once laid down. Search is bounded for phone performance
+All goals use `points / (missingCards + 1)^2` without an immediate-completion
+bonus or priority. It can change goals and reallocate shelved cards, and locks
+the chosen goal once laid down. Search is bounded for phone performance
 and never reuses one card across multiple formations. See `03` §0 for scoring,
 limits, and tie-breaks. Reward points guide decisions but do not introduce a score
 total or change game-winning rules.

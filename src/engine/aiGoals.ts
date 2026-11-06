@@ -74,8 +74,7 @@ export function assessGoals(player: Player): GoalAssessment[] {
 
 export function selectAIGoal(player: Player): GoalAssessment | null {
   const assessments = assessGoals(player);
-  assessments.sort((a,b) => Number(b.missing === 0)-Number(a.missing === 0)
-    || b.score-a.score || a.missing-b.missing
+  assessments.sort((a,b) => b.score-a.score || a.missing-b.missing
     || Number(b.goal === player.goal)-Number(a.goal === player.goal));
   const best = assessments[0];
   if (!best) return null;
