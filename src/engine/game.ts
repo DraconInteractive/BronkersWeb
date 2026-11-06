@@ -2,8 +2,8 @@ import { Card } from './card';
 import { Deck } from './deck';
 import type { Formation } from './formation';
 import { Player } from './player';
-import { getCardScores, lowestCard, wantsDiscard } from './ai';
-import { selectAIGoal, shelveAIPlan } from './aiGoals';
+import { chooseAIDiscard, shouldPickUpDiscard } from './aiDecisions';
+import { selectAIGoal, shelveAIPlan, type GoalAssessment } from './aiGoals';
 import type { RNG } from './rng';
 export enum Phase { WaitForPickup, PlayerActions, SelectDiscard }
 export const LAY_DOWN_FIRST_MESSAGE = "Lay down your goal before adding cards to your opponent's formations.";
@@ -198,12 +198,13 @@ export class Game {
   async processAITurn() {
     if (this.disposed || this.paused) return;
     const p = this.players[this.activePlayer];
-    if (!p.laidDown) { selectAIGoal(p); this.changed(); }
+    let plan: GoalAssessment | null = null;
+    if (!p.laidDown) { plan = selectAIGoal(p); this.changed(); }
     await this.delay(800); if (this.disposed || this.paused) return;
-    this.pickup(wantsDiscard(p,this.discardPile.at(-1)));
+    this.pickup(shouldPickUpDiscard(p,this.discardPile.at(-1),plan));
     await this.delay(800); if (this.disposed || this.paused) return;
     if (!p.laidDown) {
-      const plan = selectAIGoal(p);
+      plan = selectAIGoal(p);
       if (plan) { shelveAIPlan(p,plan,() => this.changed()); this.changed(); }
     } else {
       let added: boolean;
@@ -224,7 +225,7 @@ export class Game {
     if (wentOut) return;
     this.finishActions();
     await this.delay(800); if (this.disposed || this.paused) return;
-    this.discard(p,lowestCard(getCardScores(p)));
+    this.discard(p,chooseAIDiscard(p,plan));
     await this.delay(800);
   }
 }

@@ -88,3 +88,12 @@ the chosen goal once laid down. Search is bounded for phone performance
 and never reuses one card across multiple formations. See `03` §0 for scoring,
 limits, and tie-breaks. Reward points guide decisions but do not introduce a score
 total or change game-winning rules.
+
+### Goal-aligned pickup/discard
+
+Before laying down, the AI compares visible pickups and possible discards using
+its goal-allocation assessment, including privately shelved cards. It retains cards
+needed for partial sets/runs and only takes the visible discard if its retained
+allocation improves. The selected goal may consume the whole hand without a
+compulsory discard. Equal-fitness discard choices preserve wilds where possible.
+Goal weights and endgame behaviour are unchanged. See `03` §0.1.

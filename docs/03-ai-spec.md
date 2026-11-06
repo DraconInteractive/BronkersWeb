@@ -1,8 +1,8 @@
 # 03 — Opponent AI Specification (authoritative)
 
 The AI is player 1. `processAITurn()` runs whenever `nextPlayer()` makes player 1 active. It must
-follow the web goal-selection addition below. Pickup/discard scoring, laid-down table
-additions, and 800 ms turn delays retain the original behaviour.
+follow the web goal-selection and pickup/discard additions below. Laid-down table
+additions, endgame card scoring, and 800 ms turn delays retain the original behaviour.
 
 ---
 
@@ -30,11 +30,37 @@ This is an estimate rather than an exhaustive optimal solver.
   rebuild the private slots using complete groups from the chosen allocation. This
   can release a wildcard for another slot. Assessments themselves never mutate play.
 - Only existing hand/shelved cards are assessed; the AI cannot inspect the deck or
-  the human's cards. Pickup/discard scoring uses the chosen goal as before.
+  the human's cards. The visible discard may be assessed as a hypothetical pickup.
 
 ---
 
-## 1. Card scoring: `getCardScores(player, discard?: Card): Map<Card, float>`
+## 0.1. Pickup and discard aligned with goal assessment
+
+Before laydown, both decisions use the same disjoint allocation search and
+`points^1.5 / (missingCards + 1)` score as goal selection. No weights or completion
+bonuses change in this experiment.
+
+- **Pickup:** compare the current best goal score with the best score including
+  the visible discard, allowing for the subsequent compulsory discard. Take the
+  visible card only for a strict improvement in retained goal fitness. A card not
+  used in the selected allocation is not an improvement. If the chosen goal uses
+  the entire enlarged hand and completes, no discard is required; this is allowed.
+  Empty piles default to deck pickup. Unknown deck/opponent cards are never read.
+- **Discard:** protect the cards in the selected allocation, including useful
+  partial formations and ace-high runs. An unused natural can be discarded without
+  degrading that allocation. If no such natural exists, evaluate each legal hand
+  removal explicitly; prefer keeping wilds when goal score and missing count tie.
+  Only cards in hand may be discarded; private formations are included in fitness
+  calculations but hypothetical evaluation never moves cards or changes goals.
+- The unused-card shortcut preserves an existing valid allocation; it avoids
+  performing the full search once per card in normal play. The planner is bounded,
+  so this is a best-found allocation, not a claim of exhaustive optimal play.
+- After laydown the existing pickup, discard and table-addition policy remains.
+  Endgame scoring (§1) is not changed by this pre-laydown experiment.
+
+---
+
+## 1. Legacy/endgame card scoring: `getCardScores(player, discard?: Card): Map<Card, float>`
 
 Returns an **insertion-ordered** map (JS `Map` keyed by card object). Insertion order is a tie-break
 (see `minBy` and the stable sort below), so build it exactly in this order.
@@ -90,16 +116,13 @@ C# computes these in `float`. Reproduce like this:
 
 ```
 // 1. Goal selection
-if !player.laidDown: selectAIGoal(player)   // §0
+plan = null
+if !player.laidDown: plan = selectAIGoal(player)   // §0
 await delay(WAIT)
 
 // 2. Pickup decision
-scores        = getCardScores(player)
-discardScores = getCardScores(player, discardPile[last])
-cScore        = sumF(scores)
-discardCScore = f32( sumF(discardScores) - min(discardScores.values()) )   // drop the worst card (see notes)
-if f32(discardCScore - cScore) > f32(0.6):  pickupFromDiscard()
-else:                                       pickup()
+if shouldPickUpDiscard(player, discardPile[last], plan): pickupFromDiscard()
+else: pickup()
 await delay(WAIT)
 
 // 3. Actions
@@ -133,14 +156,14 @@ finishActions()                        // phase = SelectDiscard
 await delay(WAIT)
 
 // 5. Discard
-scores = getCardScores(player)
-discard(player, minBy(scores))         // first entry (insertion order) with the lowest score
+discard(player, chooseAIDiscard(player, plan))   // §0.1; legacy scoring after laydown
 await delay(WAIT)                      // no effect: discard() already passed the turn
 ```
 
 Notes:
-- The note in the original reads "Drop lowest card so its a 13 v 13 comparison". The hand has 13 cards
-  at pickup time, and the hypothetical with the discard has 14 minus the worst.
+- Pickup normally compares 13 retained cards against 13 after taking the visible
+  discard and removing a legal card. A complete goal consuming all 14 can end the
+  round without a discard; its full allocation is allowed (§0.1).
 - The AI lays down in the same turn it completes its goal (step 4). It does **not** add to the table in
   that turn. Adding (3b) only happens on turns that **start** already laid down.
 - Before laydown, the AI may change goals and reallocate cards in its private slots (§0).

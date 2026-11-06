@@ -38,9 +38,9 @@ function candidates(hand: Card[], kind: Group['kind']): Card[][] {
   return groups;
 }
 
-export function assessGoals(player: Player): GoalAssessment[] {
+export function assessGoals(player: Player, availableCards?: readonly Card[]): GoalAssessment[] {
   if (player.laidDown) return [];
-  const hand = [...player.hand,...(player.goal?.formations.flatMap(f => f.cards) ?? [])];
+  const hand = availableCards ? [...availableCards] : availableAICards(player);
   const indices = new Map(hand.map((card,i) => [card,i]));
   // Normal uncommitted hands contain at most 14 cards. Numeric membership keys
   // avoid repeatedly allocating/joining arrays in the search's hottest path.
@@ -82,11 +82,17 @@ export function assessGoals(player: Player): GoalAssessment[] {
   });
 }
 
+export function availableAICards(player: Player): Card[] {
+  return [...player.hand,...(player.goal?.formations.flatMap(f => f.cards) ?? [])];
+}
+
+export function bestGoalAssessment(player: Player, availableCards?: readonly Card[]): GoalAssessment | null {
+  return assessGoals(player,availableCards).sort((a,b) => b.score-a.score || a.missing-b.missing
+    || Number(b.goal === player.goal)-Number(a.goal === player.goal))[0] ?? null;
+}
+
 export function selectAIGoal(player: Player): GoalAssessment | null {
-  const assessments = assessGoals(player);
-  assessments.sort((a,b) => b.score-a.score || a.missing-b.missing
-    || Number(b.goal === player.goal)-Number(a.goal === player.goal));
-  const best = assessments[0];
+  const best = bestGoalAssessment(player);
   if (!best) return null;
   if (player.goal !== best.goal) {
     for (const formation of player.goal?.formations ?? []) {
