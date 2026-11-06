@@ -20,8 +20,9 @@ a completed set needs at least two naturals and a completed run at least three;
 other legal, more wildcard-heavy formations are not planned in this first pass.
 This is an estimate rather than an exhaustive optimal solver.
 
-- Rank every goal by `points / (missingCards + 1)^2`, with no bonus or priority
-  for immediate completion. The squared penalty balances
+- Rank every goal by `points^1.5 / (missingCards + 1)^2`, with no bonus or priority
+  for immediate completion. The reward exponent was increased from 1 to 1.5
+  after local play showed too much preference for easy goals. The squared penalty balances
   reward against distance, so a high reward does not automatically win.
 - Ties prefer fewer missing cards, then retain the current goal; remaining ties
   use goal-sheet order. Selection is deterministic and consumes no random draws.

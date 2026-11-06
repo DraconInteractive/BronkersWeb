@@ -36,7 +36,18 @@ test('a ready low-reward goal gets no priority over a better weighted incomplete
   const p = player('5H 5S 5D 8H 8S 8D 3C 4C 5C',[0,4]);
   const assessments = assessGoals(p);
   expect(assessments.map(a => a.missing)).toEqual([0,1]);
-  expect(assessments.map(a => a.score)).toEqual([1,1.25]);
+  expect(assessments[0].score).toBe(1);
+  expect(assessments[1].score).toBeCloseTo(5**1.5/4);
+  expect(selectAIGoal(p)!.goal.name).toBe('2S 1R');
+});
+
+test('stronger reward weighting pursues a promising 5-point goal over a ready 1-point goal', () => {
+  const p = player('5H 5S 5D 8H 8S 8D 3C 4C 9D 10D JS QC KH',[0,4]);
+  const assessments = assessGoals(p);
+  expect(assessments.map(a => a.missing)).toEqual([0,2]);
+  // With the previous linear reward, the ready goal would score higher.
+  expect(assessments[1].goal.points/(assessments[1].missing+1)**2).toBeLessThan(assessments[0].score);
+  expect(assessments[1].score).toBeGreaterThan(assessments[0].score);
   expect(selectAIGoal(p)!.goal.name).toBe('2S 1R');
 });
 
