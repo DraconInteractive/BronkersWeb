@@ -42,6 +42,8 @@ const threeRunWeight = threeRunOverride ?? Number(threeRunMatch[1]);
 const offsetOption = option('--missing-offset',null);
 const offsetOverride = offsetOption === null ? null : Number(offsetOption);
 if (offsetOverride !== null && (!Number.isFinite(offsetOverride) || offsetOverride <= 0)) throw Error('Invalid missing-card offset');
+if (offsetOverride !== null && offsetOverride !== 1) throw Error('Current policy experiments keep the missing-card offset at 1; use the historical revision for old offset experiments');
+if (policyName==='baseline' && opponentName==='baseline' && (rewardOverride!==null || threeRunOverride!==null || offsetOverride!==null)) throw Error('The frozen baseline cannot be weight-tuned');
 const offsetPattern = /const MISSING_CARD_OFFSET = ([\d.]+);/;
 const offsetMatch = rewardSource.match(offsetPattern);
 if (!offsetMatch) throw Error('Cannot identify production missing-card offset');

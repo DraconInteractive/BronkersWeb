@@ -179,25 +179,14 @@ if player.laidDown == 0:
     policy.shelve(player, plan)
     // Private slots and header remain concealed until laydown.
 else:
-    // 3b. Already laid down: add to every laid-down formation on the table (own and others')
-    do:
-        added = false
-        for other of players (index order):
-            if other.goal == null OR other.laidDown == 0: continue
-            for form of other.goal.formations (in order):
-                for card of [...player.hand]:             // snapshot taken per formation
-                    r = form.tryAdd(card)
-                    if !r.ok: continue
-                    player.removeCards([card])
-                    player.takeCards(r.swapped)
-                    added = true
-    while added
+    // 3b. Apply the selected policy's dry-run table plan through real validators.
+    apply policy.table(player, publicKnowledge).moves
     if tryEndRound(): return
 
 // 4. Lay down
 wentOut = player.hand.length == 0
 player.refreshCanLayDown()
-tryLayDown(player)                     // may end the round (and deal a new one) if hand is empty
+justLaidDown = tryLayDown(player)       // may pause on round results if hand is empty
 if wentOut OR paused: return
 if justLaidDown AND policy.addAfterLaydown: apply validated policy.table moves; check round end
 finishActions()                        // phase = SelectDiscard

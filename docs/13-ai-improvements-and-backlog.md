@@ -62,3 +62,14 @@ Pilot rounds are exploratory and are not added to the final 2,000-round totals.
 
 Keep the old snapshot immutable for future comparisons. Version a new baseline
 explicitly if the improved policy becomes the next reference.
+
+## Recorded evaluation
+
+[The complete 2,000-round evaluation](../reports/ai/availability-2000-round-evaluation.md)
+records the exact protocol above. The improved policy won 684–316 against the
+frozen baseline: 356/500 when starting and 328/500 when the baseline started.
+New-versus-new rounds averaged 11.645 individual player turns; successful laydowns
+averaged 5.527 own turns. Every round completed without a cap. This supports
+stronger first-round play against the baseline, not a claim about human or full-
+match win rates. Goal frequencies changed with the new objective; they were not
+retuned to force the previous 8–10% ten-point distribution.

@@ -119,8 +119,10 @@ Goal-aligned pickup/discard experiment: [paired comparison](../reports/ai/goal-a
 using the same 1,000 opening-round seeds and unchanged linear goal scoring.
 
 For calibration, `--reward-exponent 1.65 --three-run-weight 1.05` overrides those
-constants only in the headless module loader. `--missing-offset` similarly
-overrides the distance offset (production remains 1). The locally served game and source
+constants only in the headless module loader. The current improved cost model
+keeps the missing-card offset at 1; non-default offset experiments now require
+the historical revision used for those calibration runs. The frozen baseline
+cannot be weight-tuned. The locally served game and source
 files are unaffected by experimental overrides. Reports record actual loaded
 weights, and both the coordinator and workers validate the configuration. Workers
 receive all CLI arguments, including round limits and mode. Generated goal tables
@@ -145,3 +147,8 @@ per-policy goal statistics and abandoned pursuits. Per-policy CSVs are written
 alongside the combined CSV. The frozen snapshot and shared rules are hash-checked.
 See [the AI backlog](13-ai-improvements-and-backlog.md) for delivered and deferred
 work and the interpretation of pursuit exposure.
+
+Recorded results: [2,000-round evaluation](../reports/ai/availability-2000-round-evaluation.md).
+The mixed report separates new/old goal statistics; the self-play report is the
+new policy's unrestricted goal distribution. Successful-only laydown timings and
+abandoned-pursuit exposures are deliberately reported separately.
