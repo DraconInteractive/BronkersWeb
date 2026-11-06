@@ -55,6 +55,8 @@ test('human gates, selection regions and failed card selection',() => { const g 
 describe('AI integration',() => {
  test('AI picks up, shelves, lays down and discards, with visible updates',async () => {
    const g = game(); const ai = g.players[1]; ai.goal = ai.goals[0]; ai.hand = cards('5H 5S 5D 8H 8S 8D KH'); g.deck.cards = cards('QC'); g.discardPile = cards('3H'); g.activePlayer = 1;
+   // Isolate turn mechanics from goal preference: only this goal is unfinished.
+   ai.goals.forEach(goal => { goal.completed = goal !== ai.goal; });
    const counts: number[] = []; g.subscribe(() => counts.push(ai.hand.length)); await g.processAITurn();
    expect(ai.laidDown).toBe(true); expect(ai.goal.completed).toBe(true); expect(ai.hand).toHaveLength(1); expect(g.activePlayer).toBe(0); expect(counts).toContain(8); expect(counts).toContain(5); expect(counts).toContain(2);
  });

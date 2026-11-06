@@ -42,7 +42,14 @@ export function assessGoals(player: Player): GoalAssessment[] {
   if (player.laidDown) return [];
   const hand = [...player.hand,...(player.goal?.formations.flatMap(f => f.cards) ?? [])];
   const indices = new Map(hand.map((card,i) => [card,i]));
-  const key = (cards: Card[]) => cards.map(c => indices.get(c)).join(',');
+  // Normal uncommitted hands contain at most 14 cards. Numeric membership keys
+  // avoid repeatedly allocating/joining arrays in the search's hottest path.
+  // Keep the general representation for unusually large/custom hands.
+  const key = hand.length <= 30 ? (cards: Card[]) => {
+    let mask = 0;
+    for (const card of cards) mask |= 1 << indices.get(card)!;
+    return mask;
+  } : (cards: Card[]) => cards.map(c => indices.get(c)).join(',');
   const cache = new Map<string,Card[][]>();
   return player.goals.filter(goal => !goal.completed).map(goal => {
     const sets = goal.formations.filter(f => f.kind === 'Set').length;
@@ -71,7 +78,7 @@ export function assessGoals(player: Player): GoalAssessment[] {
     }
     const best = plans[0];
     const missing = sets*3+runs*4-best.used;
-    return {goal,missing,score:goal.points**REWARD_EXPONENT/(missing+1)**2,groups:best.groups};
+    return {goal,missing,score:goal.points**REWARD_EXPONENT/(missing+1),groups:best.groups};
   });
 }
 

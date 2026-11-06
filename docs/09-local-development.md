@@ -91,6 +91,13 @@ goals. It checks all 104 physical cards after every turn. Seeds and the engine
 commit are recorded for reproduction. Self-play is a diagnostic and does not
 predict results against a human.
 
+Artificial AI waits are replaced by an immediately resolving scheduler. The
+800 ms in-game stage delays do not contribute to simulation time. The runner
+uses up to three worker threads by default (limited by available CPUs); pass
+`--workers 1` for a serial run. Each seed remains independent and report order is
+sorted by seed, so worker count does not change decisions or outcomes. Reports
+record wall time, CPU time, player-turn count and worker count.
+
 The default limit is 500 individual player turns per round; change it with
 `--max-round-turns`. Hitting a limit is reported explicitly; observed laydowns are
 retained, but a capped trial is never counted as completed.

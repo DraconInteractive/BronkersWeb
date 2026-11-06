@@ -16,8 +16,10 @@ test.each([
   ['3H 4H 5H 6H 9D 10D JD QD KS', '2R'],
   ['5H 5S 5D 8H 8S 8D 3C 4C 5C 6C KH', '2S 1R'],
   ['3H 3S 3D 5H 5S 5D 8H 8S 8D KH KS KD AC', '4S'],
-])('chooses a ready goal fitting %s → %s', (hand,name) => {
-  const p = player(hand); const plan = selectAIGoal(p)!;
+])('lays down a ready available goal fitting %s → %s', (hand,name) => {
+  const p = player(hand);
+  p.goals.forEach(goal => { goal.completed = goal.name !== name; });
+  const plan = selectAIGoal(p)!;
   expect(plan.goal.name).toBe(name); expect(plan.missing).toBe(0);
   shelveAIPlan(p,plan);
   expect(p.canLayDown).toBe(true);
@@ -37,18 +39,19 @@ test('a ready low-reward goal gets no priority over a better weighted incomplete
   const assessments = assessGoals(p);
   expect(assessments.map(a => a.missing)).toEqual([0,1]);
   expect(assessments[0].score).toBe(1);
-  expect(assessments[1].score).toBeCloseTo(5**1.5/4);
+  expect(assessments[1].score).toBeCloseTo(5**1.5/2);
   expect(selectAIGoal(p)!.goal.name).toBe('2S 1R');
 });
 
-test('stronger reward weighting pursues a promising 5-point goal over a ready 1-point goal', () => {
-  const p = player('5H 5S 5D 8H 8S 8D 3C 4C 9D 10D JS QC KH',[0,4]);
+test('linear distance penalty pursues an 8-point goal over a ready 5-point goal', () => {
+  const p = player('5H 5S 5D 8H 8S 8D 3C 4C 5C 6C KH KS',[4,6]);
   const assessments = assessGoals(p);
-  expect(assessments.map(a => a.missing)).toEqual([0,2]);
-  // With the previous linear reward, the ready goal would score higher.
-  expect(assessments[1].goal.points/(assessments[1].missing+1)**2).toBeLessThan(assessments[0].score);
+  expect(assessments.map(a => a.missing)).toEqual([0,1]);
+  // The previous squared distance penalty preferred the ready 5-point goal.
+  expect(8**1.5/2**2).toBeLessThan(5**1.5);
+  expect(assessments[1].score).toBeCloseTo(8**1.5/2);
   expect(assessments[1].score).toBeGreaterThan(assessments[0].score);
-  expect(selectAIGoal(p)!.goal.name).toBe('2S 1R');
+  expect(selectAIGoal(p)!.goal.name).toBe('3S 1R');
 });
 
 test('does not count one physical card in both a set and a run', () => {
@@ -108,11 +111,11 @@ test('ties retain the existing goal and repeat assessments are deterministic and
 
 test('reassesses after pickup and lays down the new goal during the same turn', async () => {
   const g = new Game(seededRng(42),async () => {}); const p = g.players[1];
-  p.hand = cards('5D 5S 5C 8H 9H KH KS');
-  p.goals.forEach((goal,i) => { goal.completed = ![0,2].includes(i); });
+  p.hand = cards('3H 4H 5H 6H 9D 10D JD 8S 8C KS');
+  p.goals.forEach((goal,i) => { goal.completed = ![2,3].includes(i); });
   expect(selectAIGoal(p)!.goal).toBe(p.goals[2]);
-  g.discardPile = cards('3C'); g.deck.cards = cards('KD'); g.activePlayer = 1;
+  g.discardPile = cards('3C'); g.deck.cards = cards('QD'); g.activePlayer = 1;
   await g.processAITurn();
-  expect(p.goal).toBe(p.goals[0]); expect(p.laidDown).toBe(true);
+  expect(p.goal).toBe(p.goals[3]); expect(p.laidDown).toBe(true);
   expect(p.goal!.completed).toBe(true); expect(g.activePlayer).toBe(0);
 });
