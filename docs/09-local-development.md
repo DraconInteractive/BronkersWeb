@@ -76,7 +76,7 @@ Run repeatable, independent opening rounds using the actual production AI for bo
 seats, with animation delays skipped:
 
 ```sh
-./scripts/with-node npm run simulate:ai -- --rounds 1000 --seed 1 --output reports/ai/reward-1.5-linear-1000-first-rounds
+./scripts/with-node npm run simulate:ai -- --rounds 1000 --seed 1 --output reports/ai/tuned-ten-point-goals-1000-first-rounds
 ```
 
 The default mode is 1,000 independent opening rounds. Each trial creates a fresh game with all ten goals available to both players and
@@ -125,3 +125,5 @@ files are unaffected by experimental overrides. Reports record actual loaded
 weights, and both the coordinator and workers validate the configuration. Workers
 receive all CLI arguments, including round limits and mode. Generated goal tables
 also include round wins, median turns, and turn ranges.
+
+Current ten-point tuning: [comparison and calibration](../reports/ai/ten-point-calibration-comparison.md), with [full per-goal statistics](../reports/ai/tuned-ten-point-goals-1000-first-rounds.md).

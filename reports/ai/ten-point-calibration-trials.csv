@@ -1,0 +1,12 @@
+stage,rounds,exponent,three_run_weight,missing_offset,retain_equivalent_goals,laydowns,3R_count,3R_share_percent,2S2R_count,2S2R_share_percent,mean_player_turns_per_round,capped_trials
+baseline,1000,1.5,1,1,False,1424,74,5.1966,98,6.882,15.52,0
+exponent-1.65,200,1.65,1,1,False,277,13,4.6931,24,8.6643,16.265,0
+exponent-1.85,200,1.85,1,1,False,284,22,7.7465,48,16.9014,17.64,0
+3R-boost-pilot,200,1.65,1.05,1,False,276,27,9.7826,24,8.6957,17.21,0
+3R-boost-full-rejected,1000,1.65,1.05,1,False,1357,154,11.3486,99,7.2955,16.286,0
+smaller-3R-boost,200,1.65,1.03,1,False,275,15,5.4545,21,7.6364,16.895,0
+offset-1.25,200,1.65,1,1.25,False,285,23,8.0702,49,17.193,17.45,0
+balanced-offset,200,1.6,1.025,1.25,False,277,28,10.1083,24,8.6643,17.1,0
+offset-0.9,300,1.65,1.05,0.9,False,430,23,5.3488,35,8.1395,16.44,0
+equivalent-ties-pilot,200,1.65,1.05,1,True,278,20,7.1942,26,9.3525,16.675,0
+final,1000,1.65,1.05,1,True,1353,133,9.83,105,7.7605,15.999,0
