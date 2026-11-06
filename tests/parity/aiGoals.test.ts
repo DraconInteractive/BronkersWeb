@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { assessGoals, selectAIGoal, shelveAIPlan } from '../../src/engine/aiGoals';
+import { assessGoals, bestGoalAssessment, selectAIGoal, shelveAIPlan } from '../../src/engine/aiGoals';
 import { Player } from '../../src/engine/player';
 import { Game } from '../../src/engine/game';
 import { seededRng } from '../../src/engine/rng';
@@ -127,4 +127,16 @@ test('three-run selection boost leaves actual reward points unchanged', () => {
   expect(assessments.map(a => a.goal.points)).toEqual([10,10]);
   expect(assessments[0].score).toBeCloseTo(10**1.65*1.05/13);
   expect(assessments[1].score).toBeCloseTo(10**1.65/15);
+});
+
+
+test('keeps an equal-reward equal-distance goal despite the small three-run preference', () => {
+  const p = player('3H 4H 5H 6H 9D 10D JD QD 8S 8C 9S KS KH',[8,9]);
+  p.goal = p.goals[9];
+  expect(assessGoals(p).map(plan => plan.missing)).toEqual([2,2]);
+  expect(bestGoalAssessment(p)!.goal).toBe(p.goals[9]);
+  expect(selectAIGoal(p)!.goal).toBe(p.goals[9]);
+  const drawn = cards('10S')[0];
+  expect(bestGoalAssessment(p,[...p.hand,drawn])!.goal).toBe(p.goals[8]);
+  expect(p.goal).toBe(p.goals[9]); // Hypothetical evaluation is read-only.
 });

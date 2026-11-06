@@ -14,6 +14,8 @@ const size = (kind: Group['kind']) => kind === 'Set' ? 3 : 4;
 // The small three-run boost balances the two ten-point goals. No completion bonus.
 const REWARD_EXPONENT = 1.65;
 const THREE_RUN_REWARD_MULTIPLIER = 1.05;
+const MISSING_CARD_OFFSET = 1;
+export const RETAIN_EQUIVALENT_GOALS = true;
 const SEARCH_WIDTH = 24;
 function candidates(hand: Card[], kind: Group['kind']): Card[][] {
   const wild = hand.find(c => c.isWild);
@@ -79,7 +81,7 @@ export function assessGoals(player: Player, availableCards?: readonly Card[]): G
     }
     const best = plans[0];
     const missing = sets*3+runs*4-best.used;
-    return {goal,missing,score:goal.points**REWARD_EXPONENT*(goal.name === '3R' ? THREE_RUN_REWARD_MULTIPLIER : 1)/(missing+1),groups:best.groups};
+    return {goal,missing,score:goal.points**REWARD_EXPONENT*(goal.name === '3R' ? THREE_RUN_REWARD_MULTIPLIER : 1)/(missing+MISSING_CARD_OFFSET),groups:best.groups};
   });
 }
 
@@ -88,8 +90,14 @@ export function availableAICards(player: Player): Card[] {
 }
 
 export function bestGoalAssessment(player: Player, availableCards?: readonly Card[]): GoalAssessment | null {
-  return assessGoals(player,availableCards).sort((a,b) => b.score-a.score || a.missing-b.missing
+  const assessments = assessGoals(player,availableCards);
+  const best = assessments.sort((a,b) => b.score-a.score || a.missing-b.missing
     || Number(b.goal === player.goal)-Number(a.goal === player.goal))[0] ?? null;
+  const current = assessments.find(plan => plan.goal === player.goal);
+  // A small shape preference must not force a switch between equally rewarding,
+  // equally close goals. Apply this consistently to hypothetical decisions too.
+  if (RETAIN_EQUIVALENT_GOALS && best && current && best.goal.points === current.goal.points && best.missing === current.missing) return current;
+  return best;
 }
 
 export function selectAIGoal(player: Player): GoalAssessment | null {

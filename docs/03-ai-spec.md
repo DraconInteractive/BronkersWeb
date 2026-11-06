@@ -26,8 +26,12 @@ This is an estimate rather than an exhaustive optimal solver.
   to move both ten-point goals toward an 8–10% share of laydowns. Displayed
   goal points and actual game rules are unchanged. The distance penalty
   is now linear, rather than squared, to give higher-reward goals more time to develop.
-- Ties prefer fewer missing cards, then retain the current goal; remaining ties
-  use goal-sheet order. Selection is deterministic and consumes no random draws.
+- When the best goal and current goal offer the same actual points and need
+  the same number of cards, retain the current goal even if the small shape
+  preference gives the alternative a higher selection score. This avoids
+  needless switches between equivalent ten-point targets and is applied to
+  hypothetical pickup/discard assessment too. Other ties prefer fewer missing
+  cards, then the current goal, then goal-sheet order. Selection is deterministic and consumes no random draws.
 - Switching returns all privately shelved cards before changing goal. After pickup,
   rebuild the private slots using complete groups from the chosen allocation. This
   can release a wildcard for another slot. Assessments themselves never mutate play.

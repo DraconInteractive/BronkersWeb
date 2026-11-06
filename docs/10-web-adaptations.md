@@ -98,3 +98,8 @@ needed for partial sets/runs and only takes the visible discard if its retained
 allocation improves. The selected goal may consume the whole hand without a
 compulsory discard. Equal-fitness discard choices preserve wilds where possible.
 Goal weights and endgame behaviour are unchanged. See `03` §0.1.
+
+Ten-point calibration retains the current goal when another goal has equal actual
+points and an equal missing-card count. The 3R selection multiplier does not force
+otherwise unnecessary switches between equivalent ten-point targets. The missing
+card offset remains 1; the simulation CLI supports alternate offsets for calibration.

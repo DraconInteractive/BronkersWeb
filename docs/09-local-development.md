@@ -119,7 +119,8 @@ Goal-aligned pickup/discard experiment: [paired comparison](../reports/ai/goal-a
 using the same 1,000 opening-round seeds and unchanged linear goal scoring.
 
 For calibration, `--reward-exponent 1.65 --three-run-weight 1.05` overrides those
-constants only in the headless module loader. The locally served game and source
+constants only in the headless module loader. `--missing-offset` similarly
+overrides the distance offset (production remains 1). The locally served game and source
 files are unaffected by experimental overrides. Reports record actual loaded
 weights, and both the coordinator and workers validate the configuration. Workers
 receive all CLI arguments, including round limits and mode. Generated goal tables

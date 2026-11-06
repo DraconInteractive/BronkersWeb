@@ -32,12 +32,19 @@ const threeRunPattern = /const THREE_RUN_REWARD_MULTIPLIER = ([\d.]+);/;
 const threeRunMatch = rewardSource.match(threeRunPattern);
 if (!threeRunMatch) throw Error('Cannot identify production three-run weight');
 const threeRunWeight = threeRunOverride ?? Number(threeRunMatch[1]);
-if (workerData?.expected && (workerData.expected.rewardExponent !== rewardExponent || workerData.expected.freshRounds !== freshRounds || workerData.expected.maxRoundTurns !== maxRoundTurns || workerData.expected.threeRunWeight !== threeRunWeight)) {
+const offsetOption = option('--missing-offset',null);
+const offsetOverride = offsetOption === null ? null : Number(offsetOption);
+if (offsetOverride !== null && (!Number.isFinite(offsetOverride) || offsetOverride <= 0)) throw Error('Invalid missing-card offset');
+const offsetPattern = /const MISSING_CARD_OFFSET = ([\d.]+);/;
+const offsetMatch = rewardSource.match(offsetPattern);
+if (!offsetMatch) throw Error('Cannot identify production missing-card offset');
+const missingOffset = offsetOverride ?? Number(offsetMatch[1]);
+if (workerData?.expected && (workerData.expected.rewardExponent !== rewardExponent || workerData.expected.freshRounds !== freshRounds || workerData.expected.maxRoundTurns !== maxRoundTurns || workerData.expected.threeRunWeight !== threeRunWeight || workerData.expected.missingOffset !== missingOffset)) {
   throw Error('Worker did not receive requested experiment configuration');
 }
 // Experiments alter this constant in the headless module only. The served game
 // and source files keep their production policy while candidate weights run.
-const plugins = rewardOverride === null && threeRunOverride === null ? [] : [{
+const plugins = rewardOverride === null && threeRunOverride === null && offsetOverride === null ? [] : [{
   name:'simulation-reward-exponent',enforce:'pre',
   transform(code,id) {
     if (!id.endsWith('/src/engine/aiGoals.ts')) return;
@@ -47,6 +54,10 @@ const plugins = rewardOverride === null && threeRunOverride === null ? [] : [{
       if (!threeRunPattern.test(code)) throw Error('Cannot override three-run weight');
       code = code.replace(threeRunPattern,`const THREE_RUN_REWARD_MULTIPLIER = ${threeRunOverride};`);
     }
+    if (offsetOverride !== null) {
+      if (!offsetPattern.test(code)) throw Error('Cannot override missing-card offset');
+      code = code.replace(offsetPattern,`const MISSING_CARD_OFFSET = ${offsetOverride};`);
+    }
     return {code,map:null};
   },
 }];
@@ -55,9 +66,10 @@ try {
   const { Game } = await server.ssrLoadModule('/src/engine/game.ts');
   const { seededRng } = await server.ssrLoadModule('/src/engine/rng.ts');
   const { goalSheet } = await server.ssrLoadModule('/src/engine/goal.ts');
-  const { assessGoals } = await server.ssrLoadModule('/src/engine/aiGoals.ts');
+  const { assessGoals, RETAIN_EQUIVALENT_GOALS } = await server.ssrLoadModule('/src/engine/aiGoals.ts');
+  if (workerData?.expected && workerData.expected.retainEquivalentGoals !== RETAIN_EQUIVALENT_GOALS) throw Error('Worker goal-retention policy mismatch');
   const probe = assessGoals({hand:[],goal:null,laidDown:false,goals:goalSheet()});
-  if (probe.some(plan => plan.score !== plan.goal.points**rewardExponent*(plan.goal.name === '3R' ? threeRunWeight : 1)/(plan.missing+1))) {
+  if (probe.some(plan => plan.score !== plan.goal.points**rewardExponent*(plan.goal.name === '3R' ? threeRunWeight : 1)/(plan.missing+missingOffset))) {
     throw Error('Loaded AI scoring weights do not match requested experiment');
   }
   // Disable automatic scheduling only. The runner explicitly calls the original
@@ -139,7 +151,7 @@ try {
         const count = Math.floor(matches/workerCount)+(index < matches%workerCount ? 1 : 0);
         const seed = firstSeed+offset; offset += count;
         return new Promise((resolve,reject)=>{
-          const worker = new Worker(new URL(import.meta.url),{argv:args,workerData:{matches:count,firstSeed:seed,expected:{freshRounds,rewardExponent,threeRunWeight,maxRoundTurns}}});
+          const worker = new Worker(new URL(import.meta.url),{argv:args,workerData:{matches:count,firstSeed:seed,expected:{freshRounds,rewardExponent,threeRunWeight,missingOffset,retainEquivalentGoals:RETAIN_EQUIVALENT_GOALS,maxRoundTurns}}});
           workers.push(worker);
           let trials;
           worker.on('message',message=>{
@@ -183,14 +195,14 @@ try {
     const cpu = process.cpuUsage(startedCPU);
     const timing = {workers:workerCount,wallSeconds:(performance.now()-startedTime)/1000,cpuSeconds:(cpu.user+cpu.system)/1e6,playerTurns:rounds.reduce((n,r)=>n+r.turns,0)};
     const report={started,finished:new Date().toISOString(),commit:revision,
-      config:{trials:matches,mode:summary.mode,firstSeed,rewardExponent,rewardExponentOverride:rewardOverride,threeRunWeight,threeRunWeightOverride:threeRunOverride,maxRoundTurns,maxRoundsPerTrial:freshRounds?1:100,policy:'production AI with recorded selection weights; delays skipped; fresh game per seed'},timing,summary,trials:results};
+      config:{trials:matches,mode:summary.mode,firstSeed,rewardExponent,rewardExponentOverride:rewardOverride,threeRunWeight,threeRunWeightOverride:threeRunOverride,missingOffset,missingOffsetOverride:offsetOverride,retainEquivalentGoals:RETAIN_EQUIVALENT_GOALS,maxRoundTurns,maxRoundsPerTrial:freshRounds?1:100,policy:'production AI with recorded selection weights; delays skipped; fresh game per seed'},timing,summary,trials:results};
     await mkdir(path.dirname(output),{recursive:true});
     await writeFile(`${output}.json`,JSON.stringify(report,null,2)+'\n');
     const columns=Object.keys(distribution[0]);
     await writeFile(`${output}.csv`,columns.join(',')+'\n'+distribution.map(row=>columns.map(c=>row[c]??'').join(',')).join('\n')+'\n');
     const md=[`# Automated AI ${label}`, '',`Engine commit: ${report.commit}. Seeds ${firstSeed}–${firstSeed+matches-1}.`,
       '',`${summary.completedTrials}/${matches} ${label} completed; ${summary.cappedTrials.length} capped. ${summary.completedRounds}/${rounds.length} rounds completed; ${lays.length} laydowns.`,
-      '',`Reward exponent: ${rewardExponent}${rewardOverride === null ? ' (production)' : ' (headless experiment override)'}. Three-run selection multiplier: ${threeRunWeight}${threeRunOverride === null ? ' (production)' : ' (headless experiment override)'}.`,
+      '',`Reward exponent: ${rewardExponent}${rewardOverride === null ? ' (production)' : ' (headless experiment override)'}. Three-run selection multiplier: ${threeRunWeight}${threeRunOverride === null ? ' (production)' : ' (headless experiment override)'}. Missing-card offset: ${missingOffset}.`,
       '',`Runtime: ${timing.wallSeconds.toFixed(2)} seconds; ${timing.playerTurns} player turns; ${workerCount} worker(s). All artificial AI waits are disabled.`,
       '',`Both seats use the production AI with the selection weights recorded above. Delays are skipped; no human strategy is modelled. Each player turn counts once. ${freshRounds ? 'Every trial creates a fresh game with all ten goals available to both players, and stops at the first round result. No later rounds are included.' : 'A match ends only when the existing game-over rule is reached.'} Limits: ${maxRoundTurns} turns per round${freshRounds ? '' : ', 100 rounds per match'}. Capped trials remain in the raw results and their observed laydowns remain in this table.`,
       '',`${freshRounds ? 'All counts below are from independent opening rounds; no goal was locked before a trial began.' : 'Full-match distribution includes later rounds where previously completed goals are unavailable. Opening-round results show the policy while all ten goals remain available.'} These are self-play observations, not predictions of win rates against a human.`,
@@ -198,7 +210,7 @@ try {
       freshRounds ? `|---|---:|---:|---:|---:|---:|---:|---:|---:|` : `|---|---:|---:|---:|---:|---:|---:|`,
       ...distribution.map(d=>`| ${d.goal} | ${d.points} | ${d.laydowns} | ${(d.share*100).toFixed(1)}% | ${freshRounds ? '' : `${d.openingRoundLaydowns} | `}${d.openingRoundFirstLaydowns} | ${freshRounds ? `${d.roundWins} | ` : ''}${d.averagePersonalTurnsToLaydown?.toFixed(1)??'—'} |${freshRounds ? ` ${d.medianPersonalTurnsToLaydown??'—'} | ${d.laydowns ? `${d.minPersonalTurnsToLaydown}–${d.maxPersonalTurnsToLaydown}` : '—'} |` : ''}`),
       '',`Raw per-match/per-round events: [JSON](${path.basename(output)}.json). Aggregate data: [CSV](${path.basename(output)}.csv).`,
-      '',`Reproduce: \`./scripts/with-node npm run simulate:ai -- ${freshRounds ? '--rounds' : '--matches'} ${matches} --seed ${firstSeed} --max-round-turns ${maxRoundTurns} --workers ${workerCount}${rewardOverride === null ? '' : ` --reward-exponent ${rewardOverride}`}${threeRunOverride === null ? '' : ` --three-run-weight ${threeRunOverride}`} --output ${output}\``,
+      '',`Reproduce: \`./scripts/with-node npm run simulate:ai -- ${freshRounds ? '--rounds' : '--matches'} ${matches} --seed ${firstSeed} --max-round-turns ${maxRoundTurns} --workers ${workerCount}${rewardOverride === null ? '' : ` --reward-exponent ${rewardOverride}`}${threeRunOverride === null ? '' : ` --three-run-weight ${threeRunOverride}`}${offsetOverride === null ? '' : ` --missing-offset ${offsetOverride}`} --output ${output}\``,
       ...(summary.cappedTrials.length?['','Capped seeds: '+summary.cappedTrials.map(m=>`${m.seed} (${m.status}, round ${m.lastRound})`).join(', ')]:[])];
     await writeFile(`${output}.md`,md.join('\n')+'\n');
     console.log(JSON.stringify(summary,null,2));
