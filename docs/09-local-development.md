@@ -114,3 +114,6 @@ Recorded baseline: [1,000 independent rounds with reward exponent 1.5](../report
 Linear-penalty experiment: [paired comparison](../reports/ai/linear-penalty-comparison.md).
 Reports use the currently checked-out engine; reproduce a historical policy using
 the engine commit recorded in that report.
+
+Goal-aligned pickup/discard experiment: [paired comparison](../reports/ai/goal-aligned-decisions-comparison.md),
+using the same 1,000 opening-round seeds and unchanged linear goal scoring.
