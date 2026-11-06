@@ -75,7 +75,8 @@ pointed spade. Corner pips are larger, especially on phones; compact centre pips
 leave room for the corners. Traditional red/black colours and card overlap remain.
 
 Suit placement follows the card's role across all orientations: hand cards show
-only the top-left corner, including drag previews; discard cards show both corners
+only the top-left corner, including drag previews, except for the exposed final
+hand card described below; discard cards show both corners
 and the centre pip; formation cards show both corners without a centre pip.
 
 ### Adaptive opponent goals (2026-11-06)
@@ -103,3 +104,10 @@ Ten-point calibration retains the current goal when another goal has equal actua
 points and an equal missing-card count. The 3R selection multiplier does not force
 otherwise unnecessary switches between equivalent ten-point targets. The missing
 card offset remains 1; the simulation CLI supports alternate offsets for calibration.
+
+### Exposed final hand card
+
+The last card in hand order shows both corner pips on portrait/compact layouts.
+Desktop and landscape viewports at least 768px wide also show its centre pip.
+Other hand cards remain left-only. The exception follows draws, discards and
+reordering, including the drag preview; formation and discard roles are unchanged.

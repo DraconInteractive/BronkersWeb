@@ -166,3 +166,13 @@ html, body { height: 100%; overflow: hidden; }
 
 /* Keep both discard corners even in the shortest phone layout. */
 #app .discard.pile-card .corner.bottom { display: flex; }
+
+/* The final hand card is exposed, so it can show the opposite corner too. */
+#app .hand-card:last-child .corner.bottom,
+.drag-preview.last-hand-card .corner.bottom { display: flex; }
+#app.desktop .hand-card:last-child .center-suit,
+.drag-preview.last-hand-card:not(.mobile-drag) .center-suit { display: grid; }
+@media (orientation: landscape) and (min-width: 768px) {
+  #app .hand-card:last-child .center-suit,
+  .drag-preview.last-hand-card .center-suit { display: grid; }
+}

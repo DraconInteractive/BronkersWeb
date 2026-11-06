@@ -91,6 +91,7 @@ export class HandDrag {
     g.preview.style.left = `${event.clientX - g.offsetX}px`;
     g.preview.style.top = `${event.clientY - g.offsetY}px`;
     this.reorderAt(event.clientX, event.clientY);
+    g.preview.classList.toggle('last-hand-card',this.options.game.human.hand.at(-1) === g.card);
     this.pageHover(event.clientX, event.clientY);
   };
 
@@ -154,6 +155,7 @@ export class HandDrag {
     event.preventDefault();
     if (!this.insideHand(event.clientX, event.clientY)) { this.cancel(); return; }
     this.reorderAt(event.clientX, event.clientY);
+    g.preview.classList.toggle('last-hand-card',this.options.game.human.hand.at(-1) === g.card);
     this.finish();
   };
 
