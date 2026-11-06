@@ -76,7 +76,7 @@ Run repeatable, independent opening rounds using the actual production AI for bo
 seats, with animation delays skipped:
 
 ```sh
-./scripts/with-node npm run simulate:ai -- --rounds 1000 --seed 1 --output reports/ai/reward-1.5-1000-first-rounds
+./scripts/with-node npm run simulate:ai -- --rounds 1000 --seed 1 --output reports/ai/reward-1.5-linear-1000-first-rounds
 ```
 
 The default mode is 1,000 independent opening rounds. Each trial creates a fresh game with all ten goals available to both players and
@@ -96,7 +96,8 @@ Artificial AI waits are replaced by an immediately resolving scheduler. The
 uses up to three worker threads by default (limited by available CPUs); pass
 `--workers 1` for a serial run. Each seed remains independent and report order is
 sorted by seed, so worker count does not change decisions or outcomes. Reports
-record wall time, CPU time, player-turn count and worker count.
+record wall time, CPU time, player-turn count and worker count. Headless Vite
+loading disables watching, HMR and WebSockets, so workers do not open ports.
 
 The default limit is 500 individual player turns per round; change it with
 `--max-round-turns`. Hitting a limit is reported explicitly; observed laydowns are
@@ -109,3 +110,7 @@ goal preference because previously completed goals become unavailable. Neither
 mode changes the game rules or AI weights.
 
 Recorded baseline: [1,000 independent rounds with reward exponent 1.5](../reports/ai/reward-1.5-1000-first-rounds.md).
+
+Linear-penalty experiment: [paired comparison](../reports/ai/linear-penalty-comparison.md).
+Reports use the currently checked-out engine; reproduce a historical policy using
+the engine commit recorded in that report.

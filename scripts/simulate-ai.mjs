@@ -17,7 +17,7 @@ const workerCount = workerData ? 1 : Math.min(matches,Number(option('--workers',
 const maxRoundTurns = Number(option('--max-round-turns',500));
 const output = option('--output','reports/ai/latest');
 if (![matches,firstSeed,maxRoundTurns,workerCount].every(Number.isSafeInteger) || matches < 1 || firstSeed < 0 || maxRoundTurns < 1 || workerCount < 1) throw Error('Invalid simulation options');
-const server = await createServer({server:{middlewareMode:true},appType:'custom',logLevel:'error'});
+const server = await createServer({server:{middlewareMode:true,hmr:false,ws:false,watch:null},appType:'custom',logLevel:'error'});
 try {
   const { Game } = await server.ssrLoadModule('/src/engine/game.ts');
   const { seededRng } = await server.ssrLoadModule('/src/engine/rng.ts');
@@ -28,6 +28,7 @@ try {
     async processAITurn() {}
     runTurn() { return super.processAITurn(); }
   }
+  const revision = execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
   const started = new Date().toISOString();
   const startedTime = performance.now();
   const startedCPU = process.cpuUsage();
@@ -138,7 +139,7 @@ try {
       averageTurnsPerCompletedRound:average(rounds.filter(r=>r.status==='completed').map(r=>r.turns)),distribution};
     const cpu = process.cpuUsage(startedCPU);
     const timing = {workers:workerCount,wallSeconds:(performance.now()-startedTime)/1000,cpuSeconds:(cpu.user+cpu.system)/1e6,playerTurns:rounds.reduce((n,r)=>n+r.turns,0)};
-    const report={started,finished:new Date().toISOString(),commit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),
+    const report={started,finished:new Date().toISOString(),commit:revision,
       config:{trials:matches,mode:summary.mode,firstSeed,maxRoundTurns,maxRoundsPerTrial:freshRounds?1:100,policy:'current production AI in both seats; delays skipped; fresh game per seed'},timing,summary,trials:results};
     await mkdir(path.dirname(output),{recursive:true});
     await writeFile(`${output}.json`,JSON.stringify(report,null,2)+'\n');
