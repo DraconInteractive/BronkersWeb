@@ -47,3 +47,12 @@ Mean laydown turns are each player's own turns since the start of that round.
 This harness tests the proposed scoring variant. It does not change the browser's
 match-ending rules or add point scoring to its interface. Neither policy adapts
 to the match score or remaining rounds yet; that is a separate future improvement.
+
+## Recorded result
+
+[The 2,000-match report](../reports/ai/conservative-v-aggressive-2000.md) covers
+20,000 rounds with no caps. Aggressive won 1,525 matches, conservative 443, and 32
+were tied. Mean scores were 46.895 and 39.775 respectively. Conservative was bombed
+less often, but banked the ten-point goals much less often. This is evidence about
+these two fixed policies in this ten-round format, rather than a general verdict
+on conservative play. The default browser AI remains aggressive.

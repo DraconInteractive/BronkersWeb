@@ -281,7 +281,9 @@ test('laydown explanation stays visible without pushing phone controls off scree
 
 
 for (const incomplete of [false,true]) test(`opponent count stays concealed ${incomplete ? 'through an incomplete goal' : 'until laydown, then tracks the hand'}`,async ({page}) => {
- await page.clock.install();
+ await page.clock.install({time:0});
+ // Keep assertions from advancing the AI on slower browsers or a busy host.
+ await page.clock.pauseAt(100_000);
  await page.goto(`/tests/e2e/fixture.html?opponent-count${incomplete ? '&incomplete' : ''}`);
  const header=page.locator('.opponent');
  await expect(header).toHaveText('Opponent: 13 cards');
