@@ -4,7 +4,9 @@ This workflow builds from a Git checkout on the VPS, then copies the finished
 static game into a new release directory and atomically changes the `current`
 symlink. Caddy continues serving `/var/www/bronkers/current/public` on its existing
 internal port 43187. No Caddy configuration change or reload is needed per update.
-Node is used for builds only; there is no additional long-running app service.
+For static play, Node is used for builds only.
+[Persistent human-round logging](17-human-round-logging.md) adds a one-time Node
+service setup and API route; later deployments update it automatically.
 
 ## 1. Publish the implementation to GitHub
 
@@ -105,7 +107,8 @@ switches back. To choose a specific retained release listed by `status`:
 
 Old releases and compatibility assets are retained rather than automatically
 removed. Disk usage grows with the number of deployments. Prune old releases
-only after checking that they are not `current` or `previous` and are no longer
+only after checking that they are not `current`, `previous`, or the `telemetry`
+API target and are no longer
 needed for rollback. The script does not touch other services or web roots.
 
 ## Optional: invoke deployment from your development machine

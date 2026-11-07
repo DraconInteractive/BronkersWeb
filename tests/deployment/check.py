@@ -31,7 +31,7 @@ def check():
         base = Path(temporary)
         source = base / 'source'
         source.mkdir()
-        for name in ['src', 'scripts', 'tests', 'docs', 'deploy']:
+        for name in ['src', 'server', 'scripts', 'tests', 'docs', 'deploy', 'reports']:
             shutil.copytree(PROJECT / name, source / name)
         for name in ['.gitignore', '.gitattributes', '.node-version', 'package.json',
                      'package-lock.json', 'index.html', 'tsconfig.json',
@@ -78,6 +78,9 @@ def check():
         assert json.loads((first / 'release.json').read_text())['sourceCommit'] == first_commit
         assert (first / 'public/assets/legacy.js').is_file()
         assert (root / 'previous').resolve() == legacy
+        assert (root / 'runtime/node').is_file()
+        assert (root / 'telemetry').resolve() == first / 'server'
+        assert (first / 'server/contract.ts').is_file()
         print('PASS: git pull, real npm ci, engine tests, production build and activation', flush=True)
 
         entry = checkout / 'src/main.ts'
@@ -121,6 +124,15 @@ def check():
         assert (root / 'previous').resolve() == second
         print('PASS: deployment recovers on the next good commit', flush=True)
 
+        telemetry = (root / 'telemetry').resolve()
+        (root / 'telemetry').unlink()
+        (root / 'telemetry').mkdir()
+        assert 'telemetry must be a symlink' in deploy('rollback', success=False)
+        assert active() == recovered
+        (root / 'telemetry').rmdir()
+        (root / 'telemetry').symlink_to(telemetry, target_is_directory=True)
+        print('PASS: an invalid API link refuses activation without changing the live release', flush=True)
+
         with (root / '.deploy.lock').open('w') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             assert 'Another deployment' in deploy('rollback', success=False)
@@ -130,6 +142,7 @@ def check():
         assert (root / 'previous').resolve() == recovered
         deploy('rollback', legacy.name)
         assert active() == legacy
+        assert (root / 'telemetry').resolve() == second / 'server'
         deploy('rollback')
         assert active() == second
         deploy('rollback', '../escape', success=False)

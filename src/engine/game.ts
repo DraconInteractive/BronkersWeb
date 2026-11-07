@@ -20,6 +20,7 @@ export class Game {
   readonly roundLimit=10;
   scores=[0,0];
   roundNumber=1;
+  turnNumber=1;
   deck: Deck;
   players = [new Player(), new Player()];
   discardPile: Card[] = [];
@@ -53,6 +54,7 @@ export class Game {
   }
   setupRound() {
     this.roundResult = null;
+    this.turnNumber=1;
     this.statusMessage = null;
     this.selectedHand = []; this.selectedFormationCards = []; this.discardPile = [];
     this.deck.initializeCards();
@@ -122,6 +124,7 @@ export class Game {
   humanDiscard() { if (this.myTurn && this.selectedHand.length === 1) this.discard(this.human,this.selectedHand[0]); }
   nextPlayer() {
     if (this.paused) return;
+    this.turnNumber++;
     this.statusMessage = null; this.activePlayer = (this.activePlayer+1) % this.players.length;
     this.phase = Phase.WaitForPickup; this.changed();
     if (this.activePlayer !== 0) this.aiTask = this.processAITurn();

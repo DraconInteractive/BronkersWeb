@@ -344,3 +344,27 @@ test('points score fits compact screens and mode links work with keyboard focus'
  await page.getByRole('link',{name:'Start a 10-round points match'}).click();
  await expect(page.locator('.match-score')).toHaveText('R1/10 · You 0 : 0 Opp');
 });
+
+
+for(const offline of [false,true])test(`human round logging persists and retries, offline ${offline}`,async({page})=>{
+ if(offline)await page.addInitScript(()=>Object.defineProperty(crypto,'randomUUID',{value:undefined}));
+ const records:Array<Record<string,any>>=[];
+ await page.route('**/api/rounds',async route=>{
+  const record=route.request().postDataJSON();records.push(record);
+  if(offline&&records.length===1){await route.fulfill({status:503,json:{error:'offline'}});return;}
+  await route.fulfill({status:201,json:{id:1,eventId:record.eventId,duplicate:records.length>1}});
+ });
+ await page.goto('/tests/e2e/fixture.html?mode=points&logging');
+ await fillGoal(page);await page.getByRole('button',{name:'Lay down',exact:true}).click();
+ expect(records).toHaveLength(0);
+ await selectByName(page,'5 of Clubs');await page.locator('.table-rows .slot').first().click();
+ await page.getByRole('button',{name:'Finish actions',exact:true}).click();
+ await selectByName(page,'King of Hearts');await page.getByRole('button',{name:'Discard',exact:true}).click();
+ await expect.poll(()=>records.length).toBe(1);
+ expect(records[0]).toMatchObject({schemaVersion:1,round:1,mode:'points',winner:'human',turns:1,
+  aiPolicy:'match-and-goal-planning-v1',human:{goal:'2S',targetGoal:'2S',points:1,laydownTurn:1},scores:{human:1,ai:0}});
+ expect(records[0].eventId).toMatch(/^[a-f0-9-]{36}$/);
+ const queued=()=>page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('bronkers.round.v1.')).length);
+ if(offline){await expect.poll(queued).toBe(1);await page.reload();await expect.poll(()=>records.length).toBeGreaterThanOrEqual(2);for(const record of records)expect(record).toEqual(records[0]);}
+ await expect.poll(queued).toBe(0);
+});

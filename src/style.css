@@ -183,3 +183,5 @@ html, body { height: 100%; overflow: hidden; }
 .match-rules,.mode-choice{font-size:13px;line-height:1.5;margin-top:12px}
 .mode-link{color:#284b37;text-underline-offset:3px}
 .round-score{font-size:13px;margin:8px 0}
+
+.logging-note{font-size:12px;line-height:1.5;margin-top:12px}

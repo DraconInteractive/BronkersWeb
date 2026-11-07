@@ -11,7 +11,9 @@ staging_dir="$(mktemp -d "$project_dir/.tools/package.XXXXXX")"
 trap 'rm -rf -- "$staging_dir"' EXIT
 mkdir "$staging_dir/public" "$staging_dir/deploy"
 cp -R dist/. "$staging_dir/public/"
-cp deploy/Caddyfile.example deploy/nginx.conf.example "$staging_dir/deploy/"
+cp -R server "$staging_dir/server"
+cp docs/17-human-round-logging.md "$staging_dir/LOGGING.md"
+cp deploy/Caddyfile.example deploy/Caddyfile.logging.example deploy/nginx.conf.example "$staging_dir/deploy/"
 cp docs/11-vps-deployment.md "$staging_dir/DEPLOY.md"
 ./scripts/with-node node --input-type=module - "$staging_dir/release.json" "$release_id" <<'JS'
 import {writeFileSync, readFileSync} from 'node:fs';

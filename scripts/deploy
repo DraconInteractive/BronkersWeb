@@ -58,6 +58,7 @@ swap_link() {
 
 activate() {
   local target="$1" old=''
+  [[ ! -e "$app_root/telemetry" || -L "$app_root/telemetry" ]] || fail 'telemetry must be a symlink; no release was activated.'
   if [[ -L "$app_root/current" ]]; then
     old="$(readlink -f -- "$app_root/current")"
     [[ "$(release_path "$(basename -- "$old")")" == "$old" ]] || fail 'current must point into this deployment root.'
@@ -67,6 +68,9 @@ activate() {
     fail 'current is a directory; run init before deploying.'
   fi
   swap_link "$target" current
+  # Retain the latest API when rolling back to a pre-logging static release.
+  # The running service follows this link and systemd restarts it automatically.
+  if [[ -f "$target/server/index.mjs" ]]; then swap_link "$target/server" telemetry; fi
   printf 'Active release: %s\n' "$(basename -- "$target")"
 }
 
@@ -142,6 +146,12 @@ update() {
     cp -R "$old_assets/." "$staging_dir/public/assets/"
   fi
   cp -R dist/. "$staging_dir/public/"
+  cp -R server "$staging_dir/server"
+  # One runtime outside releases; replace atomically without writing over an
+  # executable that an existing API process is using.
+  install -d -m 0755 "$app_root/runtime"
+  install -m 0755 "$project_dir/.tools/node/bin/node" "$app_root/runtime/.node-next"
+  mv -Tf -- "$app_root/runtime/.node-next" "$app_root/runtime/node"
   ./scripts/with-node node --input-type=module - "$staging_dir/release.json" "$release_id" "$commit" <<'JS'
 import {writeFileSync} from 'node:fs';
 const [path,release,sourceCommit] = process.argv.slice(2);
@@ -170,7 +180,7 @@ rollback() {
 
 status() {
   local name
-  for name in current previous; do
+  for name in current previous telemetry; do
     if [[ -L "$app_root/$name" ]]; then printf '%s: %s\n' "$name" "$(readlink -- "$app_root/$name")";
     elif [[ -e "$app_root/$name" ]]; then printf '%s: extracted directory (run init)\n' "$name";
     else printf '%s: none\n' "$name"; fi

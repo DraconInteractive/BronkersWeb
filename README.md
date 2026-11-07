@@ -5,8 +5,9 @@ web application, hosted on an **antiX Linux** server.
 
 The browser game is implemented in TypeScript, with a pure game engine and a
 responsive DOM interface. The specification and original source below define its
-gameplay. Everything runs in the player's browser; hosting requires static files
-only, with no backend or database. Reloading starts a fresh game.
+rules. Gameplay runs in the player's browser. Static hosting is sufficient to play;
+[persistent human-round logging](docs/17-human-round-logging.md) adds a small
+Node/SQLite API behind Caddy. Reloading starts a fresh game.
 
 ## Run locally
 
@@ -42,7 +43,8 @@ For an uploadable Linux VPS deployment bundle:
 
 This produces a timestamped archive and checksum in `releases/`, including Caddy
 and nginx examples. See [VPS deployment](docs/11-vps-deployment.md). The VPS needs
-only a static web server; Node.js is required on the build machine only.
+only a static web server to play. Persistent round logging additionally needs
+the Node API described in [logging setup](docs/17-human-round-logging.md).
 
 ## Deploy updates from Git
 
@@ -100,6 +102,7 @@ migration from the existing tar installation. Caddy keeps using port 43187 and
 | [docs/14-ai-risk-ab-testing.md](docs/14-ai-risk-ab-testing.md) | Conservative/aggressive policies and the ten-round banking benchmark |
 | [docs/15-ai-public-opponents.md](docs/15-ai-public-opponents.md) | Public bombing pressure, defensive discards, and the previous aggressive control |
 | [docs/16-ai-match-planning.md](docs/16-ai-match-planning.md) | Score-aware risk, goal-sheet planning, and optional ten-round points mode |
+| [docs/17-human-round-logging.md](docs/17-human-round-logging.md) | Persistent human results, API endpoints and one-time VPS service setup |
 
 ## Reference material
 

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+app_root=/var/www/bronkers
+if [[ $# -gt 0 ]]; then
+  [[ $# == 2 && "$1" == --root ]] || { echo 'Usage: sudo scripts/install-telemetry-service [--root /var/www/bronkers]' >&2; exit 1; }
+  app_root="$2"
+fi
+[[ "$EUID" == 0 ]] || { echo 'Installing the system service needs sudo.' >&2; exit 1; }
+[[ "$app_root" =~ ^/[A-Za-z0-9_./-]+$ ]] || { echo 'Use an absolute root without whitespace or shell/systemd metacharacters.' >&2; exit 1; }
+app_root="$(realpath -e -- "$app_root")"
+[[ -x "$app_root/runtime/node" && -f "$app_root/telemetry/index.mjs" ]] || {
+  echo 'Deploy the new release first: git pull --ff-only, then ./scripts/deploy --no-pull.' >&2; exit 1;
+}
+cat > /etc/systemd/system/bronkers-telemetry.service <<UNIT
+[Unit]
+Description=Bronkers anonymous round results API
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+StateDirectory=bronkers
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/bronkers
+Environment=BRONKERS_DATA_DIR=/var/lib/bronkers
+Environment=BRONKERS_API_PORT=43188
+Environment=BRONKERS_ENTRYPOINT=$app_root/telemetry/index.mjs
+ExecStart=$app_root/runtime/node $app_root/telemetry/index.mjs
+Restart=always
+RestartSec=2
+TimeoutStopSec=15
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable bronkers-telemetry.service
+systemctl restart bronkers-telemetry.service
+printf 'API installed on 127.0.0.1:43188; database: /var/lib/bronkers/rounds.sqlite\n'
+printf 'Check: curl --fail http://127.0.0.1:43188/api/health\n'

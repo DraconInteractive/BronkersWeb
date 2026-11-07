@@ -3,6 +3,7 @@ import { Game } from '/src/engine/game.ts';
 import { mountApp } from '/src/ui/app.ts';
 import { cards } from '/tests/cards.ts';
 import '/src/style.css';
+import { attachRoundLogging } from '/src/telemetry/roundLogging.ts';
 const game = new Game(undefined,undefined,[],{mode:new URLSearchParams(location.search).get('mode')==='points'?'points':'goals'});
 if(new URLSearchParams(location.search).has('points-final')) {game.roundNumber=10;game.scores=[new URLSearchParams(location.search).has('tie')?24:20,25];}
 game.human.hand = cards('5H 5S 5D 8H 8S 8D 5C');
@@ -38,5 +39,6 @@ if (new URLSearchParams(location.search).has('opponent-count')) {
  game.deck.cards=cards('3C');game.discardPile=cards('4D');game.activePlayer=1;
 }
 mountApp(document.querySelector('#app'),game);
+if(new URLSearchParams(location.search).has('logging'))attachRoundLogging(game,{buildCommit:'development'});
 if (['round-ai','opponent-count'].some(key=>new URLSearchParams(location.search).has(key))) void game.processAITurn();
 </script></body></html>

@@ -121,3 +121,10 @@ There is no database migration or persistent server state to restore.
 
 Vite's development and preview servers are not production servers:
 https://vite.dev/guide/static-deploy
+
+## Optional persistent results
+
+The static game remains playable without a backend. Recording human rounds needs
+the Node/SQLite service and Caddy route in [human-round logging](17-human-round-logging.md).
+The archive includes API source and `LOGGING.md`; the recommended service setup
+uses the Git deployment workflow.
