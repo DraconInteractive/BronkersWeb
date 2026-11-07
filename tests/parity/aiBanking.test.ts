@@ -41,8 +41,9 @@ test('conservative pickup recognises a ready goal even when its numeric reward s
   const top=cards('5S')[0];const k={knownCards:[...p.hand,top],table:[],hasDrawn:false};
   expect(smartPickup(p,k,top,undefined,'conservative')).toBe(true);
 });
-test('the default policy stays the aggressive control; both styles share table tactics',()=>{
-  expect(aggressiveAI).toBe(improvedAI);expect(conservativeAI.table).toBe(aggressiveAI.table);
+test('the historical control and new default share table tactics',()=>{
+  expect(improvedAI.id).toBe('public-pressure-and-denial-v1');
+  expect(improvedAI.table).toBe(aggressiveAI.table);expect(conservativeAI.table).toBe(aggressiveAI.table);
   expect(conservativeAI.shelve).toBe(aggressiveAI.shelve);
 });
 

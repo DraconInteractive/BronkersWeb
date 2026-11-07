@@ -1,5 +1,6 @@
 import { Game } from '../src/engine/game';
 import { aggressiveAI, conservativeAI } from '../src/engine/aiPolicy';
+import type { AIPolicy } from '../src/engine/aiPolicy';
 import { seededRng } from '../src/engine/rng';
 
 export const bankingProtocol = {
@@ -8,7 +9,7 @@ export const bankingProtocol = {
   goals:'Each goal usable once per player per match; goal sheets reset between matches.',
   starters:'Seat 0 conservative, seat 1 aggressive; initial starter alternates by match; round starter alternates within each match.',
   conservative:'Ready goals first; otherwise sqrt(reward)/(availability distance+1), without aggressive exit-card cost. Shared immediate-win override and move search.',
-  aggressive:'Unchanged production AI: reward^1.65 (3R multiplier 1.05)/(availability distance+0.35*exitCards+1).',
+  aggressive:'Preserved aggressive control: reward^1.65 (3R multiplier 1.05)/(availability distance+0.35*exitCards+1).',
 } as const;
 
 export type BankEvent = {seat:number;goal:string;points:number;turn:number;personalTurn:number;cardsRemaining:number};
@@ -36,8 +37,9 @@ class BankingGame extends Game {
   override async processAITurn() {}
   runTurn() {return super.processAITurn();}
 }
-export async function runBankingMatch(seed:number,starter:number,maxRoundTurns=500):Promise<BankingMatch> {
-  const game=new BankingGame(seededRng(seed),async()=>{},[conservativeAI,aggressiveAI]);
+export async function runBankingMatch(seed:number,starter:number,maxRoundTurns=500,policies:readonly AIPolicy[]=[conservativeAI,aggressiveAI]):Promise<BankingMatch> {
+  if(policies.length!==2) throw Error('Banking experiment requires two policies');
+  const game=new BankingGame(seededRng(seed),async()=>{},policies);
   const ledger=new BankingLedger();
   const match:BankingMatch={seed,starter,status:'completed',winner:null,scores:[],rounds:[]};
   try {

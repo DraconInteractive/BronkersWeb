@@ -1,7 +1,9 @@
 # Conservative versus aggressive AI
 
-The browser game continues to use `improvedAI` (`availability-and-going-out-v1`),
-also exported as `aggressiveAI`. Its decisions have not changed. Twenty seeds from
+The original aggressive policy (`availability-and-going-out-v1`) remains exported
+as `aggressiveAI` for reproducing this experiment. The browser now uses the later
+`improvedAI` described in [public opponent awareness](15-ai-public-opponents.md).
+Twenty seeds from
 `reports/ai/availability-new-v-new-1000.json` are replayed as regression controls in
 `tests/parity/aiBanking.test.ts`.
 
@@ -55,4 +57,4 @@ to the match score or remaining rounds yet; that is a separate future improvemen
 were tied. Mean scores were 46.895 and 39.775 respectively. Conservative was bombed
 less often, but banked the ten-point goals much less often. This is evidence about
 these two fixed policies in this ten-round format, rather than a general verdict
-on conservative play. The default browser AI remains aggressive.
+on conservative play. The browser now uses the later aggressive policy with public opponent awareness.

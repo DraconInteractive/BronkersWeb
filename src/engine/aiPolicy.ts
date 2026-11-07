@@ -13,18 +13,23 @@ export type AIPolicy = {
   discard: (player: Player, knowledge: AIKnowledge, plan?: GoalAssessment | null) => Card;
   table: (player: Player, knowledge: AIKnowledge) => TablePlan;
 };
-export const improvedAI: AIPolicy = {
+export const aggressiveAI: AIPolicy = {
   id:'availability-and-going-out-v1',addAfterLaydown:true,shelve:shelveAIPlan,
   selectGoal:smartSelectGoal,pickup:smartPickup,discard:smartDiscard,
   table:(player,knowledge)=>planTableAdds(player.hand,ownTableFirst(player,knowledge.table)),
 };
 
 
-// The deployed policy stays aggressive. The conservative policy is an explicit
-// experiment option; it shares legal move/search capabilities with the control.
-export const aggressiveAI = improvedAI;
+// Preserve the previous aggressive control for reproducible historical tests.
+// The default remains aggressive, adding only public pressure and discard denial.
+export const improvedAI: AIPolicy = {
+  ...aggressiveAI,id:'public-pressure-and-denial-v1',
+  selectGoal:(player,knowledge)=>smartSelectGoal(player,knowledge,'public-aware'),
+  pickup:(player,knowledge,discard,plan)=>smartPickup(player,knowledge,discard,plan,'public-aware'),
+  discard:(player,knowledge,plan)=>smartDiscard(player,knowledge,plan,'public-aware'),
+};
 export const conservativeAI: AIPolicy = {
-  ...improvedAI,id:'conservative-banking-v1',
+  ...aggressiveAI,id:'conservative-banking-v1',
   selectGoal:(player,knowledge)=>smartSelectGoal(player,knowledge,'conservative'),
   pickup:(player,knowledge,discard,plan)=>smartPickup(player,knowledge,discard,plan,'conservative'),
   discard:(player,knowledge,plan)=>smartDiscard(player,knowledge,plan,'conservative'),

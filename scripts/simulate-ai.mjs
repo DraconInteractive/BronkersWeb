@@ -21,7 +21,7 @@ const policyName=option('--policy','improved');
 const opponentName=option('--opponent',policyName);
 const alternateStart=args.includes('--alternate-start');
 const baseSeed=workerData?.baseSeed ?? firstSeed;
-if (![policyName,opponentName].every(p=>['improved','baseline'].includes(p))) throw Error('Unknown AI policy');
+if (![policyName,opponentName].every(p=>['improved','aggressive','baseline'].includes(p))) throw Error('Unknown AI policy');
 if (workerData?.expected && (workerData.expected.policyName!==policyName || workerData.expected.opponentName!==opponentName || workerData.expected.alternateStart!==alternateStart)) throw Error('Worker policy configuration mismatch');
 if (![matches,firstSeed,maxRoundTurns,workerCount].every(Number.isSafeInteger) || matches < 1 || firstSeed < 0 || maxRoundTurns < 1 || workerCount < 1) throw Error('Invalid simulation options');
 const overrideOption = option('--reward-exponent',null);
@@ -73,7 +73,7 @@ const plugins = rewardOverride === null && threeRunOverride === null && offsetOv
 const server = await createServer({plugins,server:{middlewareMode:true,hmr:false,ws:false,watch:null},appType:'custom',logLevel:'error'});
 try {
   const { Game } = await server.ssrLoadModule('/src/engine/game.ts');
-  const { improvedAI } = await server.ssrLoadModule('/src/engine/aiPolicy.ts');
+  const { improvedAI, aggressiveAI } = await server.ssrLoadModule('/src/engine/aiPolicy.ts');
   let baselineAI;
   let baselineManifest=null;
   if ([policyName,opponentName].includes('baseline')) {
@@ -85,7 +85,7 @@ try {
     }
     ({baselineAI}=await server.ssrLoadModule('/tests/ai-baseline/policy.ts'));
   }
-  const policies={improved:improvedAI,baseline:baselineAI};
+  const policies={improved:improvedAI,aggressive:aggressiveAI,baseline:baselineAI};
   const policyBySeat=[policyName,opponentName];
   const { seededRng } = await server.ssrLoadModule('/src/engine/rng.ts');
   const { goalSheet } = await server.ssrLoadModule('/src/engine/goal.ts');

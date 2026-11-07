@@ -199,7 +199,8 @@ export class Game {
   aiKnowledge(player: Player): AIKnowledge {
     const table=this.players.flatMap(p=>p.laidDown ? p.goal?.formations ?? [] : []);
     return {knownCards:[...player.hand,...(player.goal?.formations.flatMap(f=>f.cards)??[]),...this.discardPile,...table.flatMap(f=>f.cards)],
-      table,hasDrawn:this.phase!==Phase.WaitForPickup};
+      table,hasDrawn:this.phase!==Phase.WaitForPickup,
+      opponents:this.players.filter(p=>p!==player).map(p=>({laidDown:p.laidDown,cardsRemaining:p.laidDown?p.hand.length:13}))};
   }
   private playAITables(player: Player, policy: AIPolicy) {
     const plan=policy.table(player,this.aiKnowledge(player));
