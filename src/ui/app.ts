@@ -57,6 +57,7 @@ export function mountApp(root: HTMLElement, game: Game) {
   const roundOverlay = $('.round-overlay');
   const picker = $<HTMLButtonElement>('.goal-picker');
   const sheet = $('.goal-sheet');
+  root.append(sheet); // Keep the popup outside the scaled/clipped card table.
   const hand = $('.hand');
   const handNodes = new Map<Card,HTMLButtonElement>();
   let helpOpen = false; let pickerOpen = false;
@@ -120,7 +121,7 @@ export function mountApp(root: HTMLElement, game: Game) {
   $('.new-game').onclick = () => { game.newGame(); picker.focus(); };
   picker.onclick = () => { pickerOpen = !pickerOpen; sheet.hidden = !pickerOpen; picker.setAttribute('aria-expanded',String(pickerOpen)); positionGoalSheet(); };
   const outsideClick = (event: MouseEvent) => {
-    if (!(event.target instanceof Node) || $('.picker-wrap').contains(event.target)) return;
+    if (!(event.target instanceof Node) || ($('.picker-wrap').contains(event.target) || sheet.contains(event.target))) return;
     pickerOpen = false; sheet.hidden = true; picker.setAttribute('aria-expanded','false');
   };
   document.addEventListener('click',outsideClick);
@@ -140,13 +141,11 @@ export function mountApp(root: HTMLElement, game: Game) {
   };
   window.addEventListener('keydown',keydown);
   function positionGoalSheet() {
-    if (root.classList.contains('desktop')) {
-      sheet.style.left = ''; sheet.style.top = ''; return;
-    }
     const anchor = picker.getBoundingClientRect();
-    const width = 256;
+    const width = root.classList.contains('desktop') ? 276 : 256;
     const height = Math.min(260, (window.visualViewport?.height ?? innerHeight) - 16);
-    sheet.style.left = `${Math.max(8, Math.min(anchor.left, innerWidth-width-8))}px`;
+    sheet.style.maxHeight = `${height}px`;
+    sheet.style.left = `${Math.max(8, Math.min(anchor.right-width, innerWidth-width-8))}px`;
     sheet.style.top = `${Math.max(8, Math.min(anchor.bottom+4, (window.visualViewport?.height ?? innerHeight)-height-8))}px`;
   }
   function scaleStage() {
@@ -225,17 +224,25 @@ export function mountApp(root: HTMLElement, game: Game) {
     $('.table-rows').classList.toggle('mobile-inactive',tableView === 'own');
     root.querySelectorAll<HTMLElement>('.table-player').forEach(el => el.classList.toggle('mobile-inactive',Number(el.dataset.player) !== tableView));
     for (const group of root.querySelectorAll<HTMLElement>('.formations')) {
-      const columns = desktop ? 2 : Math.max(1,getComputedStyle(group).gridTemplateColumns.split(' ').length);
+      const style=getComputedStyle(group);
+      const columns = desktop ? 2 : Math.max(1,style.gridTemplateColumns.split(' ').length);
       const rows = Math.max(1,Math.ceil(group.children.length/columns));
       group.style.setProperty('--formation-rows',String(rows));
-      const rowHeight = (group.clientHeight - Math.max(0, rows-1)*4)/rows;
-      const cardHeight = desktop ? 88 : Math.max(32,Math.min(62,rowHeight-(group.classList.contains('own-formations') ? 30 : 10)));
+      const rowHeight = (group.clientHeight - Math.max(0, rows-1)*(parseFloat(style.rowGap)||0))/rows;
+      const columnWidth=(group.clientWidth-Math.max(0,columns-1)*(parseFloat(style.columnGap)||0))/columns;
+      const cardHeight = desktop ? 88 : Math.max(24,Math.min(62,rowHeight-(group.classList.contains('own-formations') ? 30 : 10),(columnWidth-50)*88/62));
       group.style.setProperty('--table-card-height',`${cardHeight}px`);
+      group.style.setProperty('--table-rank-size',`${cardHeight*15/88}px`);
+      group.style.setProperty('--table-suit-size',`${cardHeight*13/88}px`);
+      group.style.setProperty('--table-center-size',`${cardHeight*29/88}px`);
+      group.style.setProperty('--table-corner-x',`${cardHeight*5/88}px`);
+      group.style.setProperty('--table-corner-y',`${cardHeight*4/88}px`);
+      group.style.setProperty('--table-suit-gap',`${cardHeight/88}px`);
       for (const row of group.querySelectorAll<HTMLElement>('.formation-row')) {
         const cards = row.querySelector<HTMLElement>('.formation-cards')!;
         const count = cards.children.length;
         const cardWidth = desktop ? 62 : cardHeight*62/88;
-        const available = Math.max(cardWidth,row.clientWidth-58);
+        const available = Math.max(cardWidth,row.clientWidth-50);
         const step = desktop ? 26 : count > 1 ? Math.max(0,Math.min(22,(available-cardWidth)/(count-1))) : 0;
         cards.style.width = count ? `${(count-1)*step+cardWidth}px` : '0px';
         cards.style.setProperty('--table-card-width',`${cardWidth}px`);

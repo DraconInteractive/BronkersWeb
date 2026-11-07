@@ -120,3 +120,17 @@ layouts by their leftovers, can add to tables immediately after committing, and
 can pick up known playable natural cards after laydown. The game rules and human
 permissions are unchanged. The previous policy is frozen for head-to-head testing.
 See `03` §0.2 and the delivered/deferred work in `13`.
+
+
+## Compact goal controls and formation-card scaling
+
+The goal picker and Lay down button now occupy a compact column to the right of
+our formations. The closed picker uses a subtle felt-coloured treatment; the
+opened goal sheet retains its existing choices and points. Its popup is placed
+outside the scaled table and aligned to the picker within the visible viewport.
+
+Formation ranks, suit markers, corner insets and symbol spacing all scale from
+the actual card height. Width and available row height both constrain card size.
+Formation cards keep their left and right markers. Landscape phones from 480 to
+760 pixels wide use two formation columns to keep the cards legible; wider
+landscape layouts retain four columns. Hand and discard marker rules are unchanged.

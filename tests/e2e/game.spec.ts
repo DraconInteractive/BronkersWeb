@@ -368,3 +368,36 @@ for(const offline of [false,true])test(`human round logging persists and retries
  if(offline){await expect.poll(queued).toBe(1);await page.reload();await expect.poll(()=>records.length).toBeGreaterThanOrEqual(2);for(const record of records)expect(record).toEqual(records[0]);}
  await expect.poll(queued).toBe(0);
 });
+
+
+test('compact right-side goal controls and proportional formation markings survive phone rotation',async({page})=>{
+ await page.goto('/tests/e2e/fixture.html?layout-cards');
+ for(const size of [{width:568,height:320},{width:667,height:375},{width:844,height:390},{width:320,height:480},{width:1280,height:720}]){
+  await page.setViewportSize(size);
+  if(size.width>900&&size.height>540)await expect(page.locator('#app')).toHaveClass(/desktop/);
+  else await expect(page.locator('#app')).not.toHaveClass(/desktop/);
+  const result=await page.evaluate(()=>{
+   const controls=document.querySelector('.goal-heading')!.getBoundingClientRect();
+   const formations=document.querySelector('.own-formations')!.getBoundingClientRect();
+   const cards=[...document.querySelectorAll<HTMLElement>('.own-formations .table-card')].map(card=>{
+    const bounds=card.getBoundingClientRect(),rank=getComputedStyle(card.querySelector('.rank')!),suit=getComputedStyle(card.querySelector('.suit')!);
+    const a=card.querySelector('.corner.top')!.getBoundingClientRect(),b=card.querySelector('.corner.bottom')!.getBoundingClientRect();
+    return {height:card.clientHeight,rank:parseFloat(rank.fontSize),suit:parseFloat(suit.fontSize),
+     inside:a.left>=bounds.left&&a.top>=bounds.top&&b.right<=bounds.right&&b.bottom<=bounds.bottom,
+     separated:a.bottom<=b.top||a.right<=b.left};
+   });
+   return {controls:controls.toJSON(),formations:formations.toJSON(),cards,overflow:document.documentElement.scrollWidth>innerWidth};
+  });
+  expect(result.controls.left).toBeGreaterThanOrEqual(result.formations.right);
+  expect(result.controls.width).toBeLessThanOrEqual(128);
+  expect(result.overflow).toBe(false);
+  for(const card of result.cards){expect(card.inside).toBe(true);expect(card.separated).toBe(true);
+   expect(card.rank/card.height).toBeCloseTo(15/88,2);expect(card.suit/card.height).toBeCloseTo(13/88,2);}
+  await page.getByRole('button',{name:'Goal',exact:true}).click();
+  await expect(page.locator('.goal-sheet')).toBeInViewport({ratio:1});
+  await page.getByRole('button',{name:'3R, 10 points',exact:true}).click();
+  await expect(page.locator('.goal-name')).toHaveText('3R');
+  // Reload the filled formations before the next orientation.
+  await page.goto('/tests/e2e/fixture.html?layout-cards');
+ }
+});
