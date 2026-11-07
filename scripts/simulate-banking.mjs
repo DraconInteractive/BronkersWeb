@@ -15,19 +15,20 @@ const workers=workerData?1:Math.min(count,Number(option('--workers',Math.min(3,a
 const maxRoundTurns=Number(option('--max-round-turns',500));
 const output=option('--output','reports/ai/conservative-v-aggressive-2000');
 const policyNames=[option('--policy','conservative'),option('--opponent','aggressive')];
-if(!policyNames.every(name=>['conservative','aggressive','improved'].includes(name))) throw Error('Unknown banking policy');
+if(!policyNames.every(name=>['conservative','aggressive','improved','public-aware'].includes(name))) throw Error('Unknown banking policy');
 if(workerData?.policyNames && policyNames.join()!==workerData.policyNames.join()) throw Error('Worker policy mismatch');
 if(![count,seed,offset,workers,maxRoundTurns].every(Number.isSafeInteger)||count<1||seed<0||workers<1||offset<0||maxRoundTurns<1)throw Error('Invalid simulation options');
 const started=performance.now();
 const server=await createServer({server:{middlewareMode:true,hmr:false,ws:false,watch:null},appType:'custom',logLevel:'error'});
 try {
   const {runBankingMatch,bankingProtocol}=await server.ssrLoadModule('/scripts/aiBanking.ts');
-  const {conservativeAI,aggressiveAI,improvedAI}=await server.ssrLoadModule('/src/engine/aiPolicy.ts');
-  const policies={conservative:conservativeAI,aggressive:aggressiveAI,improved:improvedAI};
+  const {conservativeAI,aggressiveAI,improvedAI,publicAwareAI}=await server.ssrLoadModule('/src/engine/aiPolicy.ts');
+  const policies={conservative:conservativeAI,aggressive:aggressiveAI,improved:improvedAI,'public-aware':publicAwareAI};
   const selectedPolicies=policyNames.map(name=>policies[name]);
-  const protocol={...bankingProtocol,policies:selectedPolicies.map(policy=>policy.id),
+  const protocol={...bankingProtocol,engineMode:'points',engineScoreAudit:true,policies:selectedPolicies.map(policy=>policy.id),
     starters:`Seat 0 ${policyNames[0]}, seat 1 ${policyNames[1]}; initial starter alternates by match; round starter alternates within each match.`,
-    improved:'Aggressive control plus public-count bombing pressure and discard denial. No hidden opponent cards, private progress, match score or round budget.'};
+    improved:'Bounded score-aware risk and remaining-goal opportunity values, plus public bombing pressure and discard denial. Uses public scores/round budget; no hidden cards or private opponent progress.',
+    'public-aware':'Previous public-pressure-and-denial-v1 control, without match planning.'};
   async function batch(){
     const results=[];
     for(let i=0;i<count;i++) {

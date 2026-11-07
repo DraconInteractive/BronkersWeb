@@ -4,7 +4,7 @@ import type { Player } from './player';
 import type { Formation } from './formation';
 
 export type Group = { kind: Formation['kind']; cards: Card[] };
-export type GoalAssessment = { goal: Goal; missing: number; score: number; groups: Group[]; expectedDraws?: number; riskDistance?: number; usefulOuts?: number[]; immediateWin?: boolean; exitCards?: number; finishCost?: number };
+export type GoalAssessment = { goal: Goal; missing: number; score: number; groups: Group[]; expectedDraws?: number; riskDistance?: number; usefulOuts?: number[]; immediateWin?: boolean; exitCards?: number; finishCost?: number; matchCeiling?: number; securesMatch?: boolean; continuationValue?: number; riskAdjustment?: number };
 type Plan = { remaining: Card[]; sets: number; runs: number; groups: Group[]; used: number; complete: number };
 const size = (kind: Group['kind']) => kind === 'Set' ? 3 : 4;
 

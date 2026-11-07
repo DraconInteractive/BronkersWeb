@@ -1,6 +1,8 @@
 # Public opponent awareness
 
-The browser's default `improvedAI` is now `public-pressure-and-denial-v1`. It keeps
+The previous browser default is preserved as `publicAwareAI`
+(`public-pressure-and-denial-v1`). The new default adds
+[match and goal planning](16-ai-match-planning.md). This prior policy keeps
 the aggressive reward weighting, availability assessment, formation search and
 table tactics, adding the two requested changes below. `aggressiveAI` preserves
 the previous `availability-and-going-out-v1` control; its twenty historical replay
@@ -48,7 +50,7 @@ It does not infer an uncommitted opponent's private goal or cards.
 ## Evaluation
 
 ```sh
-./scripts/with-node npm run simulate:banking -- --matches 200 --seed 6001 --workers 3 --policy improved --opponent aggressive --output reports/ai/public-awareness-v-aggressive-200
+./scripts/with-node npm run simulate:banking -- --matches 200 --seed 6001 --workers 3 --policy public-aware --opponent aggressive --output reports/ai/public-awareness-v-aggressive-200
 ```
 
 This is a separate 200-match check (2,000 rounds), using the same ten-round banking
@@ -71,3 +73,6 @@ versus 33.70%. This shows the intended defensive behaviour, but no clear overall
 match-winning improvement. The two requested features were evaluated together;
 the sample does not isolate their individual effects. No weights were retuned
 following the result. The prior control remains available for further testing.
+
+Historical reports label the prior policy `improved`; use `public-aware` to select
+that same policy now. Its implementation and policy ID remain unchanged.

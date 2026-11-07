@@ -5,6 +5,7 @@ import { Player } from './player';
 import { improvedAI, type AIPolicy } from './aiPolicy';
 import type { AIKnowledge } from './aiKnowledge';
 import type { GoalAssessment } from './aiGoals';
+import { publicGoal } from './aiMatch';
 import type { RNG } from './rng';
 export enum Phase { WaitForPickup, PlayerActions, SelectDiscard }
 export const LAY_DOWN_FIRST_MESSAGE = "Lay down your goal before adding cards to your opponent's formations.";
@@ -12,8 +13,13 @@ export type RoundResult = {
   winner: number;
   players: Array<{ index: number; laidDown: boolean; cardsRemaining: number; goal: string | null }>;
 };
+export type GameOptions = {mode?:'goals'|'points'};
 export type Scheduler = (milliseconds: number) => Promise<void>;
 export class Game {
+  readonly mode:'goals'|'points';
+  readonly roundLimit=10;
+  scores=[0,0];
+  roundNumber=1;
   deck: Deck;
   players = [new Player(), new Player()];
   discardPile: Card[] = [];
@@ -28,7 +34,8 @@ export class Game {
   private listeners = new Set<() => void>();
   private disposed = false;
   aiTask: Promise<void> | null = null;
-  constructor(public rng: RNG = Math.random, private delay: Scheduler = ms => new Promise(r => setTimeout(r,ms)), readonly aiPolicies: readonly AIPolicy[] = []) {
+  constructor(public rng: RNG = Math.random, private delay: Scheduler = ms => new Promise(r => setTimeout(r,ms)), readonly aiPolicies: readonly AIPolicy[] = [], options:GameOptions={}) {
+    this.mode=options.mode??'goals';
     this.deck = new Deck(rng); this.setupRound();
   }
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
@@ -51,19 +58,21 @@ export class Game {
     this.deck.initializeCards();
     for (const p of this.players) { p.reset(); p.takeCards(this.deck.deal(13).cards); }
     this.discardPile.push(this.deck.deal(1).cards[0]);
-    this.activePlayer = 0; this.phase = Phase.WaitForPickup; this.changed();
+    this.activePlayer = this.mode==='points'?(this.roundNumber-1)%2:0; this.phase = Phase.WaitForPickup; this.changed();
   }
   newGame() {
     if (!this.gameOver) return;
     this.players = [new Player(), new Player()]; this.deck = new Deck(this.rng);
-    this.gameOver = false; this.finishers = []; this.setupRound();
+    this.gameOver = false; this.finishers = []; this.scores=[0,0];this.roundNumber=1; this.setupRound();
   }
   tryEndRound() {
     if (this.paused) return true;
     const p = this.players[this.activePlayer];
     if (!p.laidDown || p.hand.length) return false;
     this.statusMessage = null;
-    this.finishers = this.players.flatMap((p,i) => p.goals.every(g => g.completed) ? [i] : []);
+    this.finishers = this.mode==='points'
+      ? (this.roundNumber===this.roundLimit ? this.scores.flatMap((score,i)=>score===Math.max(...this.scores)?[i]:[]) : [])
+      : this.players.flatMap((p,i) => p.goals.every(g => g.completed) ? [i] : []);
     this.roundResult = {
       winner: this.activePlayer,
       players: this.players.map((player,index) => ({
@@ -78,7 +87,10 @@ export class Game {
     if (!this.roundResult || this.gameOver) return;
     this.roundResult = null;
     if (this.finishers.length) { this.gameOver = true; this.changed(); }
-    else this.setupRound();
+    else {
+      this.roundNumber++;this.setupRound();
+      if(this.activePlayer!==0) this.aiTask=this.processAITurn();
+    }
   }
   pickup(fromDiscard = false) {
     if (this.paused || this.phase !== Phase.WaitForPickup) return;
@@ -152,9 +164,9 @@ export class Game {
     this.human.refreshCanLayDown(); this.changed();
   }
   tryLayDown(p: Player) {
-    if (this.paused || p.laidDown || !p.canLayDown) return false;
+    if (this.paused || !this.players.includes(p) || p.laidDown || !p.canLayDown) return false;
     this.statusMessage = null;
-    p.laidDown = true; p.refreshCanLayDown(); if (p.goal) p.goal.completed = true;
+    p.laidDown = true; p.refreshCanLayDown(); if (p.goal) {p.goal.completed = true;this.scores[this.players.indexOf(p)]+=p.goal.points;}
     this.tryEndRound(); this.changed(); return true;
   }
   humanLayDown() { if (this.acting) this.tryLayDown(this.human); }
@@ -198,9 +210,13 @@ export class Game {
   }
   aiKnowledge(player: Player): AIKnowledge {
     const table=this.players.flatMap(p=>p.laidDown ? p.goal?.formations ?? [] : []);
+    const opponent=this.players.find(p=>p!==player)!;
     return {knownCards:[...player.hand,...(player.goal?.formations.flatMap(f=>f.cards)??[]),...this.discardPile,...table.flatMap(f=>f.cards)],
       table,hasDrawn:this.phase!==Phase.WaitForPickup,
-      opponents:this.players.filter(p=>p!==player).map(p=>({laidDown:p.laidDown,cardsRemaining:p.laidDown?p.hand.length:13}))};
+      opponents:this.players.filter(p=>p!==player).map(p=>({laidDown:p.laidDown,cardsRemaining:p.laidDown?p.hand.length:13})),
+      ...(this.mode==='points'?{match:{round:this.roundNumber,roundLimit:this.roundLimit,ownScore:this.scores[this.players.indexOf(player)],
+        opponentScore:this.scores[this.players.indexOf(opponent)],opponentLaidDown:opponent.laidDown,
+        opponentRemainingGoals:opponent.goals.filter(g=>!g.completed).map(publicGoal)}}:{})};
   }
   private playAITables(player: Player, policy: AIPolicy) {
     const plan=policy.table(player,this.aiKnowledge(player));

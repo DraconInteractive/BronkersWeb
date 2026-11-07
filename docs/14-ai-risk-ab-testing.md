@@ -2,7 +2,7 @@
 
 The original aggressive policy (`availability-and-going-out-v1`) remains exported
 as `aggressiveAI` for reproducing this experiment. The browser now uses the later
-`improvedAI` described in [public opponent awareness](15-ai-public-opponents.md).
+`improvedAI` described in [match and goal planning](16-ai-match-planning.md).
 Twenty seeds from
 `reports/ai/availability-new-v-new-1000.json` are replayed as regression controls in
 `tests/parity/aiBanking.test.ts`.

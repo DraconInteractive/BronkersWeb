@@ -42,7 +42,7 @@ test('conservative pickup recognises a ready goal even when its numeric reward s
   expect(smartPickup(p,k,top,undefined,'conservative')).toBe(true);
 });
 test('the historical control and new default share table tactics',()=>{
-  expect(improvedAI.id).toBe('public-pressure-and-denial-v1');
+  expect(improvedAI.id).toBe('match-and-goal-planning-v1');
   expect(improvedAI.table).toBe(aggressiveAI.table);expect(conservativeAI.table).toBe(aggressiveAI.table);
   expect(conservativeAI.shelve).toBe(aggressiveAI.shelve);
 });

@@ -21,8 +21,8 @@ export const aggressiveAI: AIPolicy = {
 
 
 // Preserve the previous aggressive control for reproducible historical tests.
-// The default remains aggressive, adding only public pressure and discard denial.
-export const improvedAI: AIPolicy = {
+// The preceding default added only public pressure and discard denial.
+export const publicAwareAI: AIPolicy = {
   ...aggressiveAI,id:'public-pressure-and-denial-v1',
   selectGoal:(player,knowledge)=>smartSelectGoal(player,knowledge,'public-aware'),
   pickup:(player,knowledge,discard,plan)=>smartPickup(player,knowledge,discard,plan,'public-aware'),
@@ -33,4 +33,12 @@ export const conservativeAI: AIPolicy = {
   selectGoal:(player,knowledge)=>smartSelectGoal(player,knowledge,'conservative'),
   pickup:(player,knowledge,discard,plan)=>smartPickup(player,knowledge,discard,plan,'conservative'),
   discard:(player,knowledge,plan)=>smartDiscard(player,knowledge,plan,'conservative'),
+};
+
+// Uses match planning in points mode, public-opponent tactics otherwise.
+export const improvedAI: AIPolicy = {
+  ...publicAwareAI,id:'match-and-goal-planning-v1',
+  selectGoal:(player,knowledge)=>smartSelectGoal(player,knowledge,'match-aware'),
+  pickup:(player,knowledge,discard,plan)=>smartPickup(player,knowledge,discard,plan,'match-aware'),
+  discard:(player,knowledge,plan)=>smartDiscard(player,knowledge,plan,'match-aware'),
 };

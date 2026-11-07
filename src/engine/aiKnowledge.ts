@@ -7,10 +7,21 @@ export type PublicOpponent = {
   cardsRemaining: number;
 };
 
+export type PublicGoal = {name:string;points:number;sets:number;runs:number};
+export type AIMatchState = {
+  round:number;
+  roundLimit:number;
+  ownScore:number;
+  opponentScore:number;
+  opponentLaidDown:boolean;
+  opponentRemainingGoals:readonly PublicGoal[];
+};
+
 // Deliberately excludes deck contents and opponents' private cards/formations.
 export type AIKnowledge = {
   knownCards: readonly Card[];
   table: readonly Formation[];
   hasDrawn: boolean;
   opponents?: readonly PublicOpponent[];
+  match?: AIMatchState;
 };

@@ -39,7 +39,7 @@ class BankingGame extends Game {
 }
 export async function runBankingMatch(seed:number,starter:number,maxRoundTurns=500,policies:readonly AIPolicy[]=[conservativeAI,aggressiveAI]):Promise<BankingMatch> {
   if(policies.length!==2) throw Error('Banking experiment requires two policies');
-  const game=new BankingGame(seededRng(seed),async()=>{},policies);
+  const game=new BankingGame(seededRng(seed),async()=>{},policies,{mode:'points'});
   const ledger=new BankingLedger();
   const match:BankingMatch={seed,starter,status:'completed',winner:null,scores:[],rounds:[]};
   try {
@@ -74,9 +74,14 @@ export async function runBankingMatch(seed:number,starter:number,maxRoundTurns=5
       if(round.status!=='completed') break;
       if(index+1<bankingProtocol.rounds) game.confirmRound();
     }
+    if(game.scores.some((score,seat)=>score!==ledger.scores[seat])) throw Error('Engine scores disagree with independent banking ledger');
     match.scores=[...ledger.scores];
     if(match.scores.some(s=>s>54)) throw Error('Score exceeds single-use goal sheet');
-    if(match.status==='completed') match.winner=ledger.winner();
+    if(match.status==='completed') {
+      match.winner=ledger.winner();
+      const winners=match.winner===null?[0,1]:[match.winner];
+      if(game.finishers.join()!==winners.join()) throw Error('Engine match winner disagrees with independent ledger');
+    }
     return match;
   } finally {game.dispose();}
 }

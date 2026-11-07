@@ -176,3 +176,10 @@ html, body { height: 100%; overflow: hidden; }
   #app .hand-card:last-child .center-suit,
   .drag-preview.last-hand-card .center-suit { display: grid; }
 }
+
+.opponent-group{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.match-score{font-size:11px;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+#app:not(.desktop) .match-score{font-size:10px}
+.match-rules,.mode-choice{font-size:13px;line-height:1.5;margin-top:12px}
+.mode-link{color:#284b37;text-underline-offset:3px}
+.round-score{font-size:13px;margin:8px 0}

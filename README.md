@@ -99,6 +99,7 @@ migration from the existing tar installation. Caddy keeps using port 43187 and
 | [docs/13-ai-improvements-and-backlog.md](docs/13-ai-improvements-and-backlog.md) | Delivered AI improvements, frozen baseline, two-stage benchmark and deferred work |
 | [docs/14-ai-risk-ab-testing.md](docs/14-ai-risk-ab-testing.md) | Conservative/aggressive policies and the ten-round banking benchmark |
 | [docs/15-ai-public-opponents.md](docs/15-ai-public-opponents.md) | Public bombing pressure, defensive discards, and the previous aggressive control |
+| [docs/16-ai-match-planning.md](docs/16-ai-match-planning.md) | Score-aware risk, goal-sheet planning, and optional ten-round points mode |
 
 ## Reference material
 

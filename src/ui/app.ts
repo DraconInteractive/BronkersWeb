@@ -39,7 +39,7 @@ function cardFace(card: Card) {
 export function mountApp(root: HTMLElement, game: Game) {
   root.innerHTML = `
   <main class="stage" aria-label="Bronkers card table">
-    <header class="header"><h1>Bronkers<span class="title-dot">.</span></h1><div class="header-right"><span class="opponent">Opponent: 13 cards</span><button class="help-button" aria-label="Controls" title="Controls">?</button></div></header>
+    <header class="header"><h1>Bronkers<span class="title-dot">.</span></h1><div class="header-right"><div class="opponent-group"><span class="opponent">Opponent: 13 cards</span><span class="match-score" hidden></span></div><button class="help-button" aria-label="Controls" title="Controls">?</button></div></header>
     <section class="play-area" aria-label="Playing table">
       <div class="piles"><div class="pile"><button class="deck pile-card" aria-label="Pick up from deck"><span class="card-back"><span>B</span></span></button><span class="deck-label">Deck: 77 left</span></div><div class="pile"><button class="discard pile-card" aria-label="Pick up from discard pile"></button><span>Discard pile</span></div></div>
       <div class="table-area"><nav class="table-tabs" aria-label="Table view" hidden></nav><section class="own-goal"><div class="goal-heading"><span class="goal-label">Goal</span><div class="picker-wrap"><button class="goal-picker" aria-label="Goal" aria-expanded="false"><span class="goal-name">Choose a goal</span><span class="goal-points"></span><span class="chevron">⌄</span></button><div class="goal-sheet" hidden></div></div><button class="action lay-down">Lay down</button></div><div class="own-formations formations"></div></section><div class="table-rows"></div></div>
@@ -47,8 +47,8 @@ export function mountApp(root: HTMLElement, game: Game) {
     <section class="hand-area" aria-label="Your hand"><div class="hand-scroll"><div class="hand"></div></div><div class="hand-pagination" aria-label="Hand pages" hidden><button class="hand-previous" aria-label="Previous hand page">‹</button><span class="hand-page" aria-live="polite"></span><button class="hand-next" aria-label="Next hand page">›</button></div></section>
     <footer class="footer"><p class="prompt" role="status" aria-live="polite"></p><div class="action-space"><button class="action finish">Finish actions</button><button class="action discard-action">Discard</button></div></footer>
   </main>
-  <div class="overlay help-overlay" hidden><section class="note help-note" role="dialog" aria-modal="true" aria-labelledby="help-title"><header><h2 id="help-title">Controls</h2><button class="close-help" aria-label="Close controls">×</button></header><p class="rules-intro">Build your goal with sets and runs, lay it down, then empty your hand. Every 2 is wild.</p><dl></dl><div class="rules-footnote">A set is 3+ cards of one rank. A run is 4+ consecutive cards of one suit. Aces can be low or high.</div></section></div>
-  <div class="overlay round-overlay" hidden><section class="note round-note" role="dialog" aria-modal="true" aria-labelledby="round-title"><span class="finish-mark">♣</span><h2 id="round-title">Round complete</h2><p class="round-winner"></p><table class="round-results"><thead><tr><th scope="col">Player</th><th scope="col">Laid down</th><th scope="col">Cards left</th></tr></thead><tbody></tbody></table><button class="action next-round">Next round</button></section></div>
+  <div class="overlay help-overlay" hidden><section class="note help-note" role="dialog" aria-modal="true" aria-labelledby="help-title"><header><h2 id="help-title">Controls</h2><button class="close-help" aria-label="Close controls">×</button></header><p class="rules-intro">Build your goal with sets and runs, lay it down, then empty your hand. Every 2 is wild.</p><p class="match-rules" hidden></p><p class="mode-choice"><a class="mode-link"></a></p><dl></dl><div class="rules-footnote">A set is 3+ cards of one rank. A run is 4+ consecutive cards of one suit. Aces can be low or high.</div></section></div>
+  <div class="overlay round-overlay" hidden><section class="note round-note" role="dialog" aria-modal="true" aria-labelledby="round-title"><span class="finish-mark">♣</span><h2 id="round-title">Round complete</h2><p class="round-winner"></p><p class="round-score" hidden></p><table class="round-results"><thead><tr><th scope="col">Player</th><th scope="col">Laid down</th><th scope="col">Cards left</th></tr></thead><tbody></tbody></table><button class="action next-round">Next round</button></section></div>
   <div class="overlay gameover-overlay" hidden><section class="note gameover-note" role="dialog" aria-modal="true" aria-labelledby="gameover-title"><span class="finish-mark">♣</span><h2 id="gameover-title">Game over</h2><p class="finisher"></p><button class="action new-game">New game</button></section></div>`;
   const $ = <T extends HTMLElement = HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
   const stage = $('.stage');
@@ -70,6 +70,11 @@ export function mountApp(root: HTMLElement, game: Game) {
     setPage: page => { handPage = page; layoutHand(); layoutTable(); },
     pageButton: step => $<HTMLButtonElement>(step < 0 ? '.hand-previous' : '.hand-next'),
   });
+  const modeLink=$<HTMLAnchorElement>('.mode-link');
+  modeLink.href=game.mode==='points'?'/?mode=goals':'/?mode=points';
+  modeLink.textContent=game.mode==='points'?'Start a classic goal match':'Start a 10-round points match';
+  $('.match-rules').hidden=game.mode!=='points';
+  $('.match-rules').textContent='Points are banked when you lay down. Each goal can score once. After ten rounds, the highest total wins. Going out before your opponent lays down leaves them with zero points for that round.';
   const helpButton = $<HTMLButtonElement>('.help-button');
   function showHelp(open: boolean) {
     if (open && game.paused) return;
@@ -124,7 +129,11 @@ export function mountApp(root: HTMLElement, game: Game) {
     if (event.key === 'Escape' && handDrag.dragging) { event.preventDefault(); handDrag.cancel(); return; }
     if (game.paused) { if (event.key === 'Tab') { event.preventDefault(); $(game.roundResult ? '.next-round' : '.new-game').focus(); } return; }
     if (event.key === 'Escape') { if (helpOpen) showHelp(false); else { pickerOpen = false; sheet.hidden = true; picker.setAttribute('aria-expanded','false'); } }
-    if (helpOpen && event.key === 'Tab') { event.preventDefault(); $('.close-help').focus(); }
+    if (helpOpen && event.key === 'Tab') {
+      event.preventDefault();const focusable=[...help.querySelectorAll<HTMLElement>('button,a[href]')];
+      const current=focusable.indexOf(document.activeElement as HTMLElement);
+      focusable[(current+(event.shiftKey?-1:1)+focusable.length)%focusable.length].focus();
+    }
     if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && game.selectedHand.length) {
       event.preventDefault(); if (!handDrag.dragging) moveSelected(event.key === 'ArrowLeft' ? -1 : 1);
     }
@@ -274,6 +283,9 @@ export function mountApp(root: HTMLElement, game: Game) {
       if (oldOpponentCount >= 0) $('.opponent').animate([{opacity:0.2},{opacity:1}],{duration:400});
       oldOpponentCount = count;
     }
+    $('.match-score').hidden=game.mode!=='points';
+    $('.match-score').textContent=`R${game.roundNumber}/${game.roundLimit} · You ${game.scores[0]} : ${game.scores[1]} Opp`;
+    $('.match-score').setAttribute('aria-label',`Round ${game.roundNumber} of ${game.roundLimit}. You: ${game.scores[0]} points; opponent: ${game.scores[1]} points.`);
     $('.deck-label').textContent = `Deck: ${game.deck.count} left`;
     $<HTMLButtonElement>('.deck').disabled = !game.canPickup;
     $<HTMLButtonElement>('.discard').disabled = !game.canPickup || !game.discardPile.length;
@@ -325,6 +337,8 @@ export function mountApp(root: HTMLElement, game: Game) {
       helpOpen = false; help.hidden = true; pickerOpen = false; sheet.hidden = true;
       picker.setAttribute('aria-expanded','false');
       roundOverlay.hidden = false; stage.inert = true;
+      $('.round-score').hidden=game.mode!=='points';
+      $('.round-score').textContent=`Points: You ${game.scores[0]} · Opponent ${game.scores[1]}`;
       $('.round-winner').textContent = game.roundResult.winner === 0 ? 'You won the round.' : `Your opponent won the round.`;
       $('.round-results tbody').replaceChildren(...game.roundResult.players.map(player => {
         const row = element('tr',player.index === game.roundResult!.winner ? 'round-winning-row' : '');
@@ -340,7 +354,9 @@ export function mountApp(root: HTMLElement, game: Game) {
     if (game.gameOver) {
       const newlyOpen = gameover.hidden;
       helpOpen = false; help.hidden = true; gameover.hidden = false; stage.inert = true;
-      $('.finisher').textContent = game.finishers.length === 2 ? 'You and your opponent both completed every goal.' : game.finishers[0] === 0 ? 'You completed every goal.' : 'Your opponent completed every goal.';
+      $('.finisher').textContent = game.mode==='points'
+        ? (game.finishers.length===2 ? `Draw: ${game.scores[0]}–${game.scores[1]}.` : game.finishers[0]===0 ? `You won ${game.scores[0]}–${game.scores[1]}.` : `Your opponent won ${game.scores[1]}–${game.scores[0]}.`)
+        : game.finishers.length === 2 ? 'You and your opponent both completed every goal.' : game.finishers[0] === 0 ? 'You completed every goal.' : 'Your opponent completed every goal.';
       if (newlyOpen) $('.new-game').focus();
     } else { gameover.hidden = true; stage.inert = helpOpen || game.roundResult !== null; }
     if (focused) root.querySelector<HTMLElement>(`[data-focus="${focused}"]`)?.focus({preventScroll:true});

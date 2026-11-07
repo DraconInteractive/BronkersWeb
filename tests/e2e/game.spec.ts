@@ -302,3 +302,45 @@ for (const incomplete of [false,true]) test(`opponent count stays concealed ${in
  await expect(page.locator('.prompt')).toHaveText('Pick up from the deck or discard pile');
  await expect(header).toHaveText(incomplete ? 'Opponent: 13 cards' : 'Opponent: 7 cards');
 });
+
+
+test('points mode banks immediately, retains totals and advances the round',async({page})=>{
+ await page.goto('/tests/e2e/fixture.html?mode=points');
+ await expect(page.locator('.match-score')).toHaveText('R1/10 · You 0 : 0 Opp');
+ await fillGoal(page);await page.getByRole('button',{name:'Lay down',exact:true}).click();
+ await expect(page.locator('.match-score')).toHaveText('R1/10 · You 1 : 0 Opp');
+ await selectByName(page,'5 of Clubs');await page.locator('.table-rows .slot').first().click();
+ await page.getByRole('button',{name:'Finish actions',exact:true}).click();
+ await selectByName(page,'King of Hearts');await page.getByRole('button',{name:'Discard',exact:true}).click();
+ await expect(page.locator('.round-score')).toHaveText('Points: You 1 · Opponent 0');
+ await page.getByRole('button',{name:'Next round',exact:true}).click();
+ await expect(page.locator('.match-score')).toContainText('R2/10 · You 1');
+});
+
+for(const tie of [false,true])test(`points match ends on totals and resets, tie ${tie}`,async({page})=>{
+ await page.goto(`/tests/e2e/fixture.html?mode=points&points-final${tie?'&tie':''}`);
+ await fillGoal(page);await page.getByRole('button',{name:'Lay down',exact:true}).click();
+ await selectByName(page,'5 of Clubs');await page.locator('.table-rows .slot').first().click();
+ await page.getByRole('button',{name:'Finish actions',exact:true}).click();
+ await selectByName(page,'King of Hearts');await page.getByRole('button',{name:'Discard',exact:true}).click();
+ await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await expect(page.locator('.finisher')).toHaveText(tie?'Draw: 25–25.':'Your opponent won 25–21.');
+ await page.getByRole('button',{name:'New game',exact:true}).click();
+ await expect(page.locator('.match-score')).toHaveText('R1/10 · You 0 : 0 Opp');
+});
+
+test('points score fits compact screens and mode links work with keyboard focus',async({page})=>{
+ await page.goto('/tests/e2e/fixture.html?mode=points&points-final');
+ for(const size of [{width:320,height:480},{width:844,height:390}]){
+  await page.setViewportSize(size);await expect(page.locator('.match-score')).toBeInViewport({ratio:1});
+  const title=await page.locator('.header h1').boundingBox(),score=await page.locator('.opponent-group').boundingBox();
+  expect(title!.x+title!.width).toBeLessThanOrEqual(score!.x);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+ await page.getByRole('button',{name:'Controls',exact:true}).click();
+ await page.keyboard.press('Tab');await expect(page.getByRole('link',{name:'Start a classic goal match'})).toBeFocused();
+ await page.keyboard.press('Enter');await expect(page.locator('.match-score')).toBeHidden();
+ await page.getByRole('button',{name:'Controls',exact:true}).click();
+ await page.getByRole('link',{name:'Start a 10-round points match'}).click();
+ await expect(page.locator('.match-score')).toHaveText('R1/10 · You 0 : 0 Opp');
+});
