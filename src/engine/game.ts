@@ -36,7 +36,7 @@ export class Game {
   private disposed = false;
   aiTask: Promise<void> | null = null;
   constructor(public rng: RNG = Math.random, private delay: Scheduler = ms => new Promise(r => setTimeout(r,ms)), readonly aiPolicies: readonly AIPolicy[] = [], options:GameOptions={}) {
-    this.mode=options.mode??'goals';
+    this.mode=options.mode??'points';
     this.deck = new Deck(rng); this.setupRound();
   }
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
@@ -82,6 +82,9 @@ export class Game {
         goal: player.laidDown ? player.goal?.name ?? null : null,
       })),
     };
+    // Keep the final round snapshot for logging while ending a points match
+    // immediately. There is no eleventh deal or extra confirmation screen.
+    if(this.mode==='points'&&this.roundNumber>=this.roundLimit)this.gameOver=true;
     this.changed();
     return true;
   }

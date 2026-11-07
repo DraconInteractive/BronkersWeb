@@ -46,9 +46,10 @@ containing every match, round, laydown event, scores, winners and bombs. Counts 
 percentages in the goal table describe goals actually laid down, not intentions.
 Mean laydown turns are each player's own turns since the start of that round.
 
-This harness tests the proposed scoring variant. It does not change the browser's
-match-ending rules or add point scoring to its interface. Neither policy adapts
-to the match score or remaining rounds yet; that is a separate future improvement.
+This historical harness introduced the ten-round scoring experiment. The browser
+now uses that format by default, with [match planning and final results](16-ai-match-planning.md).
+The preserved conservative and aggressive controls used in this report do not
+adapt to the match score or remaining rounds.
 
 ## Recorded result
 

@@ -4,7 +4,7 @@ import { Deck } from '../../src/engine/deck';
 import { goalSheet } from '../../src/engine/goal';
 import { seededRng } from '../../src/engine/rng';
 import { cards, names } from '../cards';
-const game = () => new Game(seededRng(42),async () => {});
+const game = () => new Game(seededRng(42),async () => {},[],{mode:'goals'});
 function fillSets(g: Game) {
  g.chooseGoal(0); g.phase = Phase.PlayerActions;
  g.human.hand = cards('5H 5S 5D 8H 8S 8D KH');

@@ -109,7 +109,7 @@ try {
     const results = [];
     for (let i = 0; i < matches; i++) {
       const seed = firstSeed+i;
-      const game = new SimulationGame(seededRng(seed),async () => {},policyBySeat.map(name=>policies[name]));
+      const game = new SimulationGame(seededRng(seed),async () => {},policyBySeat.map(name=>policies[name]),{mode:'goals'});
       if (alternateStart) game.activePlayer=(seed-baseSeed)%2;
       const result = {seed,status:'running',finishers:[],rounds:[]};
       if (freshRounds && game.players.some(p=>p.goals.some(g=>g.completed))) throw Error('Fresh trial contains locked goals');

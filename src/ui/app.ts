@@ -47,9 +47,9 @@ export function mountApp(root: HTMLElement, game: Game) {
     <section class="hand-area" aria-label="Your hand"><div class="hand-scroll"><div class="hand"></div></div><div class="hand-pagination" aria-label="Hand pages" hidden><button class="hand-previous" aria-label="Previous hand page">‹</button><span class="hand-page" aria-live="polite"></span><button class="hand-next" aria-label="Next hand page">›</button></div></section>
     <footer class="footer"><p class="prompt" role="status" aria-live="polite"></p><div class="action-space"><button class="action finish">Finish actions</button><button class="action discard-action">Discard</button></div></footer>
   </main>
-  <div class="overlay help-overlay" hidden><section class="note help-note" role="dialog" aria-modal="true" aria-labelledby="help-title"><header><h2 id="help-title">Controls</h2><button class="close-help" aria-label="Close controls">×</button></header><p class="rules-intro">Build your goal with sets and runs, lay it down, then empty your hand. Every 2 is wild.</p><p class="match-rules" hidden></p><p class="mode-choice"><a class="mode-link"></a></p><p class="logging-note">Completed rounds are recorded to help test the AI. No names or hand contents are recorded.</p><dl></dl><div class="rules-footnote">A set is 3+ cards of one rank. A run is 4+ consecutive cards of one suit. Aces can be low or high.</div></section></div>
+  <div class="overlay help-overlay" hidden><section class="note help-note" role="dialog" aria-modal="true" aria-labelledby="help-title"><header><h2 id="help-title">Controls</h2><button class="close-help" aria-label="Close controls">×</button></header><p class="rules-intro">Build your goal with sets and runs, lay it down, then empty your hand. Every 2 is wild.</p><p class="match-rules" hidden></p><p class="logging-note">Completed rounds are recorded to help test the AI. No names or hand contents are recorded.</p><dl></dl><div class="rules-footnote">A set is 3+ cards of one rank. A run is 4+ consecutive cards of one suit. Aces can be low or high.</div></section></div>
   <div class="overlay round-overlay" hidden><section class="note round-note" role="dialog" aria-modal="true" aria-labelledby="round-title"><span class="finish-mark">♣</span><h2 id="round-title">Round complete</h2><p class="round-winner"></p><p class="round-score" hidden></p><table class="round-results"><thead><tr><th scope="col">Player</th><th scope="col">Laid down</th><th scope="col">Cards left</th></tr></thead><tbody></tbody></table><button class="action next-round">Next round</button></section></div>
-  <div class="overlay gameover-overlay" hidden><section class="note gameover-note" role="dialog" aria-modal="true" aria-labelledby="gameover-title"><span class="finish-mark">♣</span><h2 id="gameover-title">Game over</h2><p class="finisher"></p><button class="action new-game">New game</button></section></div>`;
+  <div class="overlay gameover-overlay" hidden><section class="note gameover-note" role="dialog" aria-modal="true" aria-labelledby="gameover-title"><span class="finish-mark">♣</span><h2 id="gameover-title">Game over</h2><p class="finisher"></p><div class="match-summary-scroll" role="region" aria-label="Goals achieved" tabindex="0" hidden><table class="match-summary"><caption>Goals achieved <span class="summary-scroll-hint" hidden>· scroll for more</span></caption><thead><tr><th scope="col">Goal</th><th scope="col">You</th><th scope="col">Opponent</th></tr></thead><tbody></tbody><tfoot></tfoot></table></div><button class="action new-game">Restart match</button></section></div>`;
   const $ = <T extends HTMLElement = HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
   const stage = $('.stage');
   const help = $('.help-overlay');
@@ -71,9 +71,6 @@ export function mountApp(root: HTMLElement, game: Game) {
     setPage: page => { handPage = page; layoutHand(); layoutTable(); },
     pageButton: step => $<HTMLButtonElement>(step < 0 ? '.hand-previous' : '.hand-next'),
   });
-  const modeLink=$<HTMLAnchorElement>('.mode-link');
-  modeLink.href=game.mode==='points'?'/?mode=goals':'/?mode=points';
-  modeLink.textContent=game.mode==='points'?'Start a classic goal match':'Start a 10-round points match';
   $('.match-rules').hidden=game.mode!=='points';
   $('.match-rules').textContent='Points are banked when you lay down. Each goal can score once. After ten rounds, the highest total wins. Going out before your opponent lays down leaves them with zero points for that round.';
   const helpButton = $<HTMLButtonElement>('.help-button');
@@ -91,7 +88,7 @@ export function mountApp(root: HTMLElement, game: Game) {
   const instructions = [
     ['Pick up','Click the deck or the discard pile.'],
     ['Select cards','Click cards in your hand. The arrow keys move selected cards.'],
-    ['Choose a goal','Click the yellow note.'],
+    ['Choose a goal','Use the goal selector beside your formations.'],
     ['Place cards','Select cards, then click a dotted slot.'],
     ['Take cards back','Click cards in a slot, then the gold arrow.'],
     ['Lay down','Click Lay down when every slot is filled.'],
@@ -118,7 +115,7 @@ export function mountApp(root: HTMLElement, game: Game) {
   $('.hand-previous').onclick = () => { handPage--; layoutHand(); };
   $('.hand-next').onclick = () => { handPage++; layoutHand(); };
   $('.next-round').onclick = () => { handPage = 0; game.confirmRound(); if (!game.gameOver) picker.focus(); };
-  $('.new-game').onclick = () => { game.newGame(); picker.focus(); };
+  $('.new-game').onclick = () => { handPage=0;tableView='own';game.newGame();picker.focus(); };
   picker.onclick = () => { pickerOpen = !pickerOpen; sheet.hidden = !pickerOpen; picker.setAttribute('aria-expanded',String(pickerOpen)); positionGoalSheet(); };
   const outsideClick = (event: MouseEvent) => {
     if (!(event.target instanceof Node) || ($('.picker-wrap').contains(event.target) || sheet.contains(event.target))) return;
@@ -128,7 +125,15 @@ export function mountApp(root: HTMLElement, game: Game) {
   document.addEventListener('pointerdown',outsideClick);
   const keydown = (event: KeyboardEvent) => {
     if (event.key === 'Escape' && handDrag.dragging) { event.preventDefault(); handDrag.cancel(); return; }
-    if (game.paused) { if (event.key === 'Tab') { event.preventDefault(); $(game.roundResult ? '.next-round' : '.new-game').focus(); } return; }
+    if (game.paused) {
+      if(event.key==='Tab'){
+        event.preventDefault();const dialog=game.gameOver?gameover:roundOverlay;
+        const focusable=[...dialog.querySelectorAll<HTMLElement>('button:not([disabled]),[tabindex="0"]')].filter(el=>!el.hidden);
+        const current=focusable.indexOf(document.activeElement as HTMLElement);
+        focusable[(current+(event.shiftKey?-1:1)+focusable.length)%focusable.length]?.focus();
+      }
+      return;
+    }
     if (event.key === 'Escape') { if (helpOpen) showHelp(false); else { pickerOpen = false; sheet.hidden = true; picker.setAttribute('aria-expanded','false'); } }
     if (helpOpen && event.key === 'Tab') {
       event.preventDefault();const focusable=[...help.querySelectorAll<HTMLElement>('button,a[href]')];
@@ -360,7 +365,7 @@ export function mountApp(root: HTMLElement, game: Game) {
     $<HTMLButtonElement>('.discard-action').disabled = game.selectedHand.length !== 1;
     helpButton.disabled = game.paused;
     picker.disabled = game.paused;
-    if (game.roundResult) {
+    if (game.roundResult&&!game.gameOver) {
       const newlyOpen = roundOverlay.hidden;
       helpOpen = false; help.hidden = true; pickerOpen = false; sheet.hidden = true;
       picker.setAttribute('aria-expanded','false');
@@ -382,19 +387,42 @@ export function mountApp(root: HTMLElement, game: Game) {
     if (game.gameOver) {
       const newlyOpen = gameover.hidden;
       helpOpen = false; help.hidden = true; gameover.hidden = false; stage.inert = true;
+      $('.gameover-note').classList.toggle('match-finished',game.mode==='points');
+      $('#gameover-title').textContent=game.mode==='points'?'Match complete':'Game over';
+      $('.new-game').textContent=game.mode==='points'?'Restart match':'New game';
+      pickerOpen=false;sheet.hidden=true;picker.setAttribute('aria-expanded','false');
+      $('.match-summary-scroll').hidden=game.mode!=='points';
+      $('.match-summary tbody').replaceChildren(...game.human.goals.map((goal,index)=>{
+        const row=element('tr');const label=element('th','',goal.name);label.scope='row';
+        label.append(element('span','summary-goal-points',` · ${goal.points} ${goal.points===1?'pt':'pts'}`));row.append(label);
+        game.players.forEach(player=>{
+          const achieved=player.goals[index].completed;
+          const cell=element('td',achieved?'summary-achieved':'summary-unachieved',achieved?`+${goal.points}`:'—');
+          cell.setAttribute('aria-label',achieved?`${goal.name} achieved, ${goal.points} points`:'Not achieved');row.append(cell);
+        });return row;
+      }));
+      const totals=element('tr');const totalLabel=element('th','','Total');totalLabel.scope='row';
+      totals.append(totalLabel,...game.scores.map(score=>element('td','',String(score))));
+      $('.match-summary tfoot').replaceChildren(totals);
       $('.finisher').textContent = game.mode==='points'
         ? (game.finishers.length===2 ? `Draw: ${game.scores[0]}–${game.scores[1]}.` : game.finishers[0]===0 ? `You won ${game.scores[0]}–${game.scores[1]}.` : `Your opponent won ${game.scores[1]}–${game.scores[0]}.`)
         : game.finishers.length === 2 ? 'You and your opponent both completed every goal.' : game.finishers[0] === 0 ? 'You completed every goal.' : 'Your opponent completed every goal.';
-      if (newlyOpen) $('.new-game').focus();
+      updateSummaryHint();
+      if (newlyOpen) {handDrag.cancel();$('.match-summary-scroll').scrollTop=0;$('.new-game').focus();}
     } else { gameover.hidden = true; stage.inert = helpOpen || game.roundResult !== null; }
     if (focused) root.querySelector<HTMLElement>(`[data-focus="${focused}"]`)?.focus({preventScroll:true});
+  }
+  function updateSummaryHint(){
+    const scroll=$('.match-summary-scroll');
+    $('.summary-scroll-hint').hidden=scroll.hidden||scroll.scrollHeight<=scroll.clientHeight+1;
   }
   const unsubscribe = game.subscribe(render);
   window.addEventListener('resize',scaleStage);
   window.visualViewport?.addEventListener('resize',scaleStage);
-  const resizeObserver = new ResizeObserver(() => { layoutHand(); layoutTable(); });
+  const resizeObserver = new ResizeObserver(() => { layoutHand(); layoutTable(); updateSummaryHint(); });
   resizeObserver.observe($('.hand-scroll'));
   resizeObserver.observe($('.table-area'));
+  resizeObserver.observe($('.match-summary-scroll'));
   render(); scaleStage();
   return () => { handDrag.dispose(); unsubscribe(); document.removeEventListener('click',outsideClick); document.removeEventListener('pointerdown',outsideClick); window.removeEventListener('keydown',keydown); window.removeEventListener('resize',scaleStage); window.visualViewport?.removeEventListener('resize',scaleStage); resizeObserver.disconnect(); game.dispose(); };
 }

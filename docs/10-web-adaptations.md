@@ -137,3 +137,17 @@ counts. Columns are capped at a useful content width so sparse formations stay
 adjacent. Available height can increase the column count to keep controls inside
 the table. Returning selected cards reuses the formation's add-button position
 instead of reserving a separate row. Hand and discard marker rules are unchanged.
+
+
+## Ten-round match completion
+
+All public games now run for exactly ten rounds. Players bank goal points at
+laydown; the greater total wins, with a draw for equal totals. The tenth round
+opens the match-complete screen immediately, retaining its result snapshot for
+logging. There is no eleventh deal or additional round-confirmation step.
+
+The final screen shows the winner, totals and a goal-by-goal comparison of both
+players' achievements. The table scrolls within short screens while Restart match
+remains visible. Restart resets scores, completed goals, round/turn counters and
+hand pagination, and starts a fresh logged match. Classic goal-completion rules
+remain an internal reference-test option, not a choice in the browser UI.

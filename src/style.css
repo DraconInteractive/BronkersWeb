@@ -175,8 +175,7 @@ html, body { height: 100%; overflow: hidden; }
 .opponent-group{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .match-score{font-size:11px;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
 #app:not(.desktop) .match-score{font-size:10px}
-.match-rules,.mode-choice{font-size:13px;line-height:1.5;margin-top:12px}
-.mode-link{color:#284b37;text-underline-offset:3px}
+.match-rules{font-size:13px;line-height:1.5;margin-top:12px}
 .round-score{font-size:13px;margin:8px 0}
 
 .logging-note{font-size:12px;line-height:1.5;margin-top:12px}
@@ -213,3 +212,30 @@ html, body { height: 100%; overflow: hidden; }
   #app:not(.desktop) .own-formations .return-button{width:36px;height:36px;line-height:36px;font-size:22px;pointer-events:auto}
   #app:not(.desktop) .own-formations .has-return .slot{visibility:hidden}
 }
+
+/* Final match results keep the restart action visible on short phone screens. */
+.gameover-note.match-finished{width:560px;max-height:calc(100dvh - 24px);padding:18px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.match-finished .finish-mark{display:none}
+.match-finished h2,.match-finished .finisher,.match-finished .new-game{flex-shrink:0}
+.match-finished .finisher{margin:0;font-size:16px;font-weight:600}
+.match-finished .new-game{align-self:center}
+.match-summary-scroll{min-height:0;overflow:auto;overscroll-behavior:contain}
+.match-summary-scroll:focus-visible{outline:2px solid #39644a;outline-offset:2px}
+.match-summary{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.match-summary caption{text-align:left;font-weight:600;padding:0 6px 8px}
+.match-summary th,.match-summary td{padding:7px 6px;border-bottom:1px solid #bdaf7466;text-align:center}
+.match-summary th:first-child{text-align:left;font-weight:500;white-space:nowrap}
+.match-summary thead th{position:sticky;top:0;background:var(--note);font-size:12px}
+.match-summary tfoot th,.match-summary tfoot td{position:sticky;bottom:0;background:var(--note);font-weight:700;border-top:2px solid #bdaf74;border-bottom:0}
+.summary-goal-points{font-size:11px;color:#646044}
+.summary-achieved{color:#1f5c43;font-weight:600}
+.summary-unachieved{color:#8a8061}
+
+@media(max-height:420px){
+ .gameover-note.match-finished{padding:12px;gap:6px}
+ .match-finished h2{font-size:22px;line-height:26px}
+ .match-finished .finisher{font-size:14px;line-height:20px}
+ .match-finished .new-game{min-height:36px;padding:6px 20px}
+}
+
+.summary-scroll-hint{font-size:11px;font-weight:400;color:#646044}

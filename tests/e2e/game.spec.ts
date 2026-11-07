@@ -317,32 +317,46 @@ test('points mode banks immediately, retains totals and advances the round',asyn
  await expect(page.locator('.match-score')).toContainText('R2/10 · You 1');
 });
 
-for(const tie of [false,true])test(`points match ends on totals and resets, tie ${tie}`,async({page})=>{
- await page.goto(`/tests/e2e/fixture.html?mode=points&points-final${tie?'&tie':''}`);
+for(const outcome of ['human','ai','draw'] as const)test(`ten-round match summary shows goals and restarts, winner ${outcome}`,async({page})=>{
+ await page.goto(`/tests/e2e/fixture.html?mode=points&points-final${outcome==='draw'?'&tie':outcome==='human'?'&human-win':''}`);
  await fillGoal(page);await page.getByRole('button',{name:'Lay down',exact:true}).click();
  await selectByName(page,'5 of Clubs');await page.locator('.table-rows .slot').first().click();
  await page.getByRole('button',{name:'Finish actions',exact:true}).click();
  await selectByName(page,'King of Hearts');await page.getByRole('button',{name:'Discard',exact:true}).click();
- await page.getByRole('button',{name:'Continue',exact:true}).click();
- await expect(page.locator('.finisher')).toHaveText(tie?'Draw: 25–25.':'Your opponent won 25–21.');
- await page.getByRole('button',{name:'New game',exact:true}).click();
- await expect(page.locator('.match-score')).toHaveText('R1/10 · You 0 : 0 Opp');
+ const result=page.getByRole('dialog',{name:'Match complete',exact:true});
+ await expect(result).toBeVisible();await expect(page.getByRole('dialog',{name:'Round complete'})).toBeHidden();
+ await expect(result.locator('.finisher')).toHaveText(outcome==='draw'?'Draw: 25–25.':outcome==='human'?'You won 25–20.':'Your opponent won 25–21.');
+ await expect(result.locator('.match-summary tbody tr')).toHaveCount(10);
+ const goal=result.locator('.match-summary tbody tr').first();
+ await expect(goal.locator('td').first()).toHaveText('+1');
+ await expect(goal.locator('td').last()).toHaveText(outcome==='human'?'—':'+1');
+ await expect(result.locator('.match-summary tfoot td').first()).toHaveText(outcome==='ai'?'21':'25');
+ for(const size of [{width:320,height:480},{width:636,height:279},{width:844,height:390}]){
+  await page.setViewportSize(size);await expect(result.getByRole('button',{name:'Restart match'})).toBeInViewport({ratio:1});
+  await expect(result.locator('.summary-scroll-hint')).toBeVisible();
+  expect(await result.evaluate(el=>el.scrollWidth<=el.clientWidth&&el.scrollHeight<=el.clientHeight)).toBe(true);
+ }
+ await expect(result.getByRole('button',{name:'Restart match'})).toBeFocused();
+ await page.keyboard.press('Tab');await expect(result.getByRole('region',{name:'Goals achieved'})).toBeFocused();
+ await page.keyboard.press('Tab');await expect(result.getByRole('button',{name:'Restart match'})).toBeFocused();
+ await result.getByRole('button',{name:'Restart match'}).click();
+ await expect(result).toBeHidden();await expect(page.locator('.match-score')).toHaveText('R1/10 · You 0 : 0 Opp');
+ await expect(page.locator('.hand-card')).toHaveCount(13);
+ await page.getByRole('button',{name:'Goal',exact:true}).click();
+ await expect(page.getByRole('button',{name:'2S, 1 points',exact:true})).toBeEnabled();
 });
 
-test('points score fits compact screens and mode links work with keyboard focus',async({page})=>{
- await page.goto('/tests/e2e/fixture.html?mode=points&points-final');
+test('normal game and old mode bookmarks start a ten-round points match',async({page})=>{
+ for(const path of ['/','/?mode=goals']){
+  await page.goto(path);await expect(page.locator('.match-score')).toHaveText('R1/10 · You 0 : 0 Opp');
+ }
  for(const size of [{width:320,height:480},{width:844,height:390}]){
   await page.setViewportSize(size);await expect(page.locator('.match-score')).toBeInViewport({ratio:1});
-  const title=await page.locator('.header h1').boundingBox(),score=await page.locator('.opponent-group').boundingBox();
-  expect(title!.x+title!.width).toBeLessThanOrEqual(score!.x);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  }
  await page.getByRole('button',{name:'Controls',exact:true}).click();
- await page.keyboard.press('Tab');await expect(page.getByRole('link',{name:'Start a classic goal match'})).toBeFocused();
- await page.keyboard.press('Enter');await expect(page.locator('.match-score')).toBeHidden();
- await page.getByRole('button',{name:'Controls',exact:true}).click();
- await page.getByRole('link',{name:'Start a 10-round points match'}).click();
- await expect(page.locator('.match-score')).toHaveText('R1/10 · You 0 : 0 Opp');
+ await expect(page.locator('.match-rules')).toContainText('After ten rounds, the highest total wins');
+ await expect(page.getByRole('link',{name:'Start a classic goal match'})).toHaveCount(0);
 });
 
 

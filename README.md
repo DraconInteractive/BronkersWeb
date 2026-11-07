@@ -7,7 +7,9 @@ The browser game is implemented in TypeScript, with a pure game engine and a
 responsive DOM interface. The specification and original source below define its
 rules. Gameplay runs in the player's browser. Static hosting is sufficient to play;
 [persistent human-round logging](docs/17-human-round-logging.md) adds a small
-Node/SQLite API behind Caddy. Reloading starts a fresh game.
+Node/SQLite API behind Caddy. Matches last ten rounds; the most banked points
+wins. The final screen compares achieved goals and offers a restart. Reloading
+starts a fresh game.
 
 ## Run locally
 

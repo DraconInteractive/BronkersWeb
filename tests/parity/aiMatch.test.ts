@@ -121,3 +121,20 @@ test('the same hand takes more reward risk when behind late, less when protectin
   expect(behind.riskAdjustment).toBeGreaterThan(0);expect(ahead.riskAdjustment).toBeLessThan(0);
   expect(behind.score).toBeGreaterThan(ahead.score);
 });
+
+
+test('default matches run exactly ten rounds and finish immediately with goals and scores intact',()=>{
+ const g=new ManualGame(seededRng(77),async()=>{});expect(g.mode).toBe('points');
+ let total=0;
+ for(let i=0;i<10;i++){
+  ready(g,0,i);total+=g.human.goal!.points;g.human.hand=[];g.tryLayDown(g.human);
+  expect(g.roundNumber).toBe(i+1);expect(g.scores[0]).toBe(total);
+  if(i<9){expect(g.gameOver).toBe(false);g.confirmRound();}else{
+   expect(g.gameOver).toBe(true);expect(g.finishers).toEqual([0]);expect(g.roundResult?.winner).toBe(0);
+   expect(g.human.goals.every(goal=>goal.completed)).toBe(true);
+   g.confirmRound();expect(g.roundNumber).toBe(10);
+  }
+ }
+ g.newGame();expect(g.roundResult).toBeNull();expect(g.scores).toEqual([0,0]);expect(g.roundNumber).toBe(1);
+ expect(g.players.every(player=>player.goals.every(goal=>!goal.completed))).toBe(true);g.dispose();
+});

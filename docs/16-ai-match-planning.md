@@ -7,16 +7,15 @@ The earlier `aggressiveAI` and `conservativeAI` controls also remain available.
 
 ## Live points context
 
-Open `/?mode=points`, or choose **Start a 10-round points match** under Controls.
-This starts a new match. The header shows the round and banked scores; round
+The normal game URL starts a ten-round points match. The header shows the round and banked scores; round
 results show totals. Each player can score each goal once. Points are banked at
 laydown and retained even when the opponent goes out. Bombed players score zero
 for that round. After exactly ten rounds, the higher total wins; equal totals are
 a draw. Starters alternate between rounds. New game resets scores and goal sheets.
 
-The ordinary URL continues the classic goal-completion format. It has no fixed
-round budget, so the new policy uses the preceding public-opponent tactics there.
-No artificial ten-round score objective is applied to a classic match.
+All browser matches use this format, including older `?mode=goals` bookmarks.
+The classic goal-completion format is retained only as an explicit engine option
+for reference tests and historical simulations, without a public mode switch.
 
 The AI receives its own score, the opponent's public score, round/limit and the
 opponent's remaining goal-sheet descriptors. Completed goals reflect past public
@@ -87,3 +86,7 @@ were tied. Mean scores were 46.880 versus 47.170. The paired mean difference was
 strength gain in this batch. Both requested features are implemented, but their
 heuristics need further evaluation. The report also breaks down results by
 round-start score position. No weights were changed after the final comparison.
+
+The tenth round opens **Match complete** immediately. The screen names the winner
+(or draw), lists both scores and every achieved goal, and offers **Restart match**.
+Its scrollable goal table keeps the restart button visible on short screens.

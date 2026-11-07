@@ -5,7 +5,12 @@ import { cards } from '/tests/cards.ts';
 import '/src/style.css';
 import { attachRoundLogging } from '/src/telemetry/roundLogging.ts';
 const game = new Game(undefined,undefined,[],{mode:new URLSearchParams(location.search).get('mode')==='points'?'points':'goals'});
-if(new URLSearchParams(location.search).has('points-final')) {game.roundNumber=10;game.scores=[new URLSearchParams(location.search).has('tie')?24:20,25];}
+if(new URLSearchParams(location.search).has('points-final')) {
+ const params=new URLSearchParams(location.search),tie=params.has('tie'),win=params.has('human-win');
+ game.roundNumber=10;game.scores=[tie||win?24:20,win?20:25];
+ game.human.goals.forEach((goal,i)=>goal.completed=(tie||win?[1,4,6,8]:[4,5,8]).includes(i));
+ game.players[1].goals.forEach((goal,i)=>goal.completed=(win?[4,5,8]:[0,1,5,7,9]).includes(i));
+}
 game.human.hand = cards('5H 5S 5D 8H 8S 8D 5C');
 game.deck.cards = cards('KH');
 if (new URLSearchParams(location.search).has('final')) game.human.goals.forEach((goal,i) => { goal.completed = i !== 0; });
