@@ -401,3 +401,28 @@ test('compact right-side goal controls and proportional formation markings survi
   await page.goto('/tests/e2e/fixture.html?layout-cards');
  }
 });
+
+
+test('small PC short viewport keeps three sets adjacent and large with return controls accessible',async({page})=>{
+ // The supplied 954x418 screenshot corresponds to roughly this CSS viewport
+ // at 150% display scaling.
+ await page.setViewportSize({width:636,height:279});
+ await page.goto('/tests/e2e/fixture.html?layout-three-sets');
+ const formations=page.locator('.own-formations .formation');
+ const bounds=await formations.evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON()));
+ expect(bounds).toHaveLength(3);
+ for(let i=1;i<bounds.length;i++){expect(Math.abs(bounds[i].top-bounds[0].top)).toBeLessThan(1);expect(bounds[i].left-bounds[i-1].right).toBeLessThanOrEqual(12);}
+ await expect.poll(()=>page.locator('.table-card').first().evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(56);
+ const form=formations.first();
+ await form.getByRole('button',{name:'Jack of Hearts',exact:true}).click({position:{x:5,y:8}});
+ const back=form.getByRole('button',{name:'Return selected cards to hand'});
+ await expect(back).toBeVisible();await expect(back).toBeInViewport({ratio:1});
+ await back.click();await expect(form.locator('.table-card')).toHaveCount(0);
+ await expect(page.locator('.hand-card')).toHaveCount(8);
+ await page.goto('/tests/e2e/fixture.html?crowded');
+ await page.getByRole('button',{name:'Player 1',exact:true}).click();
+ const table=await page.locator('.table-area').boundingBox();
+ for(const slot of await page.locator('.table-player .slot').all()){
+  await expect(slot).toBeInViewport({ratio:1});const box=await slot.boundingBox();expect(box!.y+box!.height).toBeLessThanOrEqual(table!.y+table!.height+1);
+ }
+});

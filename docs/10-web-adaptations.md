@@ -131,6 +131,9 @@ outside the scaled table and aligned to the picker within the visible viewport.
 
 Formation ranks, suit markers, corner insets and symbol spacing all scale from
 the actual card height. Width and available row height both constrain card size.
-Formation cards keep their left and right markers. Landscape phones from 480 to
-760 pixels wide use two formation columns to keep the cards legible; wider
-landscape layouts retain four columns. Hand and discard marker rules are unchanged.
+Formation cards keep their left and right markers. Compact landscape layouts
+choose columns from the available width, number of formations and their card
+counts. Columns are capped at a useful content width so sparse formations stay
+adjacent. Available height can increase the column count to keep controls inside
+the table. Returning selected cards reuses the formation's add-button position
+instead of reserving a separate row. Hand and discard marker rules are unchanged.

@@ -209,6 +209,7 @@ export function mountApp(root: HTMLElement, game: Game) {
   }
   function layoutTable() {
     const desktop = root.classList.contains('desktop');
+    const compactLandscape=!desktop&&innerWidth>=480&&innerWidth>innerHeight&&innerHeight<=540;
     const views: Array<{key: 'own' | number; label: string}> = [];
     if (!game.human.laidDown) views.push({key:'own',label:'Your goal'});
     game.players.forEach((p,i) => { if (p.laidDown) views.push({key:i,label:`Player ${i}`}); });
@@ -224,13 +225,31 @@ export function mountApp(root: HTMLElement, game: Game) {
     $('.table-rows').classList.toggle('mobile-inactive',tableView === 'own');
     root.querySelectorAll<HTMLElement>('.table-player').forEach(el => el.classList.toggle('mobile-inactive',Number(el.dataset.player) !== tableView));
     for (const group of root.querySelectorAll<HTMLElement>('.formations')) {
+      if(compactLandscape&&group.clientWidth>0){
+        const count=group.children.length;
+        const maxCards=Math.max(3,...[...group.querySelectorAll('.formation-cards')].map(cards=>cards.children.length));
+        const gap=parseFloat(getComputedStyle(group).columnGap)||0;
+        const minimum=maxCards>7?152:112;
+        let columns=Math.max(1,Math.min(count,Math.floor((group.clientWidth+gap)/(minimum+gap))));
+        // Keep the add/return control inside each row even with browser chrome
+        // reducing the available height. More overlap beats clipped controls.
+        const rowGap=parseFloat(getComputedStyle(group).rowGap)||0;
+        while(columns<count){
+          const rows=Math.ceil(count/columns);
+          if((group.clientHeight-(rows-1)*rowGap)/rows>=44||(group.clientWidth-columns*gap)/(columns+1)<68)break;
+          columns++;
+        }
+        const preferred=Math.min(240,50+62*62/88+(maxCards-1)*18);
+        const width=Math.min(preferred,(group.clientWidth-(columns-1)*gap)/columns);
+        group.style.gridTemplateColumns=`repeat(${columns},minmax(0,${width}px))`;
+      }else group.style.removeProperty('grid-template-columns');
       const style=getComputedStyle(group);
       const columns = desktop ? 2 : Math.max(1,style.gridTemplateColumns.split(' ').length);
       const rows = Math.max(1,Math.ceil(group.children.length/columns));
       group.style.setProperty('--formation-rows',String(rows));
       const rowHeight = (group.clientHeight - Math.max(0, rows-1)*(parseFloat(style.rowGap)||0))/rows;
-      const columnWidth=(group.clientWidth-Math.max(0,columns-1)*(parseFloat(style.columnGap)||0))/columns;
-      const cardHeight = desktop ? 88 : Math.max(24,Math.min(62,rowHeight-(group.classList.contains('own-formations') ? 30 : 10),(columnWidth-50)*88/62));
+      const columnWidth=group.querySelector<HTMLElement>('.formation')?.clientWidth??group.clientWidth;
+      const cardHeight = desktop ? 88 : Math.max(24,Math.min(62,rowHeight-(group.classList.contains('own-formations')&&!compactLandscape ? 30 : 8),(columnWidth-50)*88/62));
       group.style.setProperty('--table-card-height',`${cardHeight}px`);
       group.style.setProperty('--table-rank-size',`${cardHeight*15/88}px`);
       group.style.setProperty('--table-suit-size',`${cardHeight*13/88}px`);
@@ -274,7 +293,9 @@ export function mountApp(root: HTMLElement, game: Game) {
     if (own) {
       const returnSpace = element('div','return-space');
       const back = button('↓','return-button',() => game.returnToHand(f)); back.title = 'Return to hand'; back.setAttribute('aria-label','Return selected cards to hand');
-      back.style.visibility = enabled && f.cards.some(c => game.selectedFormationCards.includes(c)) ? 'visible' : 'hidden';
+      const canReturn=enabled&&f.cards.some(c=>game.selectedFormationCards.includes(c));
+      wrapper.classList.toggle('has-return',canReturn);
+      back.style.visibility = canReturn ? 'visible' : 'hidden';
       returnSpace.append(back); wrapper.append(returnSpace);
     }
     return wrapper;

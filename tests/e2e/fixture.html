@@ -43,6 +43,11 @@ if(new URLSearchParams(location.search).has('layout-cards')) {
  ['5H 5S 5D','8H 8S 8D','3C 4C 5C 6C','9S 10S JS QS'].forEach((text,i)=>game.human.goal.formations[i].trySet(cards(text)));
  game.human.refreshCanLayDown();
 }
+if(new URLSearchParams(location.search).has('layout-three-sets')) {
+ game.human.goal=game.human.goals[1];
+ ['JH JD 2C','AH AS 2H','KS KH 2D'].forEach((text,i)=>game.human.goal.formations[i].trySet(cards(text)));
+ game.human.hand=cards('6C 3S 6S 3H 8S');game.phase=1;game.human.refreshCanLayDown();
+}
 mountApp(document.querySelector('#app'),game);
 if(new URLSearchParams(location.search).has('logging'))attachRoundLogging(game,{buildCommit:'development'});
 if (['round-ai','opponent-count'].some(key=>new URLSearchParams(location.search).has(key))) void game.processAITurn();

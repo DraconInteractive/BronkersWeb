@@ -204,7 +204,12 @@ html, body { height: 100%; overflow: hidden; }
 #app .table-card .corner.bottom{bottom:var(--table-corner-y,4px);right:var(--table-corner-x,5px)}
 
 #app .table-card .center-suit{font-size:var(--table-center-size,29px)}
-/* Shorter landscape phones need two formation columns to keep cards legible. */
-@media (orientation:landscape) and (min-width:480px) and (max-width:760px) and (max-height:540px){
-  #app:not(.desktop) .formations{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Compact landscape uses content-sized columns selected from the available width.
+   Reuse the add-button position for returning selected cards to save a whole row. */
+@media (orientation:landscape) and (min-width:480px) and (max-height:540px){
+  #app:not(.desktop) .formations{gap:8px;justify-content:start}
+  #app:not(.desktop) .formation{position:relative}
+  #app:not(.desktop) .own-formations .return-space{position:absolute;right:4px;top:50%;transform:translateY(-50%);height:36px;width:36px;padding:0;pointer-events:none}
+  #app:not(.desktop) .own-formations .return-button{width:36px;height:36px;line-height:36px;font-size:22px;pointer-events:auto}
+  #app:not(.desktop) .own-formations .has-return .slot{visibility:hidden}
 }
