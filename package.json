@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "package": "bash scripts/package",
-    "simulate:ai": "node scripts/simulate-ai.mjs"
+    "simulate:ai": "node scripts/simulate-ai.mjs",
+    "simulate:banking": "node scripts/simulate-banking.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

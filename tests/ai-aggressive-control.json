@@ -1,0 +1,418 @@
+[
+  {
+    "seed": 1001,
+    "round": {
+      "starter": 0,
+      "turns": 9,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "2S 2R",
+          "points": 10,
+          "turn": 9,
+          "personalTurn": 5,
+          "cardsRemaining": 0
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1002,
+    "round": {
+      "starter": 1,
+      "turns": 8,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 5,
+          "personalTurn": 3,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "4S",
+          "points": 5,
+          "turn": 8,
+          "personalTurn": 4,
+          "cardsRemaining": 2
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1003,
+    "round": {
+      "starter": 0,
+      "turns": 10,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 10,
+          "personalTurn": 5,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1004,
+    "round": {
+      "starter": 1,
+      "turns": 9,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 9,
+          "personalTurn": 5,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1005,
+    "round": {
+      "starter": 0,
+      "turns": 15,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 15,
+          "personalTurn": 8,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1006,
+    "round": {
+      "starter": 1,
+      "turns": 13,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "3R",
+          "points": 10,
+          "turn": 12,
+          "personalTurn": 6,
+          "cardsRemaining": 2
+        },
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 13,
+          "personalTurn": 7,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1007,
+    "round": {
+      "starter": 0,
+      "turns": 14,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 14,
+          "personalTurn": 7,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1008,
+    "round": {
+      "starter": 1,
+      "turns": 25,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 25,
+          "personalTurn": 13,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1009,
+    "round": {
+      "starter": 0,
+      "turns": 15,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 5,
+          "personalTurn": 3,
+          "cardsRemaining": 3
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1010,
+    "round": {
+      "starter": 1,
+      "turns": 22,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 14,
+          "personalTurn": 7,
+          "cardsRemaining": 3
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1011,
+    "round": {
+      "starter": 0,
+      "turns": 18,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "2S 2R",
+          "points": 10,
+          "turn": 18,
+          "personalTurn": 9,
+          "cardsRemaining": 0
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1012,
+    "round": {
+      "starter": 1,
+      "turns": 12,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 12,
+          "personalTurn": 6,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1013,
+    "round": {
+      "starter": 0,
+      "turns": 21,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 19,
+          "personalTurn": 10,
+          "cardsRemaining": 3
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1014,
+    "round": {
+      "starter": 1,
+      "turns": 11,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 10,
+          "personalTurn": 5,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 11,
+          "personalTurn": 6,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1015,
+    "round": {
+      "starter": 0,
+      "turns": 19,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 19,
+          "personalTurn": 10,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1016,
+    "round": {
+      "starter": 1,
+      "turns": 13,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 12,
+          "personalTurn": 6,
+          "cardsRemaining": 3
+        },
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "4S",
+          "points": 5,
+          "turn": 13,
+          "personalTurn": 7,
+          "cardsRemaining": 2
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1017,
+    "round": {
+      "starter": 0,
+      "turns": 10,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 10,
+          "personalTurn": 5,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1018,
+    "round": {
+      "starter": 1,
+      "turns": 15,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 15,
+          "personalTurn": 8,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1019,
+    "round": {
+      "starter": 0,
+      "turns": 14,
+      "winner": 1,
+      "laydowns": [
+        {
+          "seat": 1,
+          "policy": "improved",
+          "goal": "3S 1R",
+          "points": 8,
+          "turn": 14,
+          "personalTurn": 7,
+          "cardsRemaining": 1
+        }
+      ]
+    }
+  },
+  {
+    "seed": 1020,
+    "round": {
+      "starter": 1,
+      "turns": 12,
+      "winner": 0,
+      "laydowns": [
+        {
+          "seat": 0,
+          "policy": "improved",
+          "goal": "1S 2R",
+          "points": 8,
+          "turn": 10,
+          "personalTurn": 5,
+          "cardsRemaining": 3
+        }
+      ]
+    }
+  }
+]

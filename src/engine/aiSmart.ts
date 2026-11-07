@@ -7,6 +7,8 @@ import type { AIKnowledge } from './aiKnowledge';
 import { ownTableFirst, planTableAdds } from './aiTable';
 import { getCardScores, lowestCard } from './ai';
 
+export type AIRiskProfile = 'aggressive' | 'conservative';
+
 function completionRemainder(groups: readonly Group[], pool: readonly Card[], knowledge: AIKnowledge) {
   // Goal slots are sets first, then runs, irrespective of the search's slot order.
   const forms: Formation[] = [...groups.filter(g=>g.kind==='Set').map(()=>new CardSet()),...groups.filter(g=>g.kind==='Run').map(()=>new Run())];
@@ -18,7 +20,7 @@ function completionRemainder(groups: readonly Group[], pool: readonly Card[], kn
   return planTableAdds(pool.filter(c=>!used.has(c)),[...forms,...knowledge.table]);
 }
 
-export function smartAssessGoals(player: Player, knowledge: AIKnowledge, cards = availableAICards(player)): GoalAssessment[] {
+export function smartAssessGoals(player: Player, knowledge: AIKnowledge, cards = availableAICards(player), profile: AIRiskProfile = 'aggressive'): GoalAssessment[] {
   const model = availabilityModel(cards,knowledge);
   const completed=new Map<string,number>();
   const completeRemaining=(groups: readonly Group[])=>{
@@ -39,17 +41,18 @@ export function smartAssessGoals(player: Player, knowledge: AIKnowledge, cards =
     // Unknown future pickups are not treated as known playable cards. Once ready,
     // use an actual legal layoff simulation instead of this conservative estimate.
     const exitCards=plan.missing ? Math.max(0,14-required-1) : Math.max(0,completeRemaining(plan.groups)-(knowledge.hasDrawn?1:0));
-    const finishCost=riskDistance+0.35*exitCards;
+    const finishCost=profile==='conservative' ? riskDistance : riskDistance+0.35*exitCards;
     const assessment: GoalAssessment = {...plan,riskDistance,exitCards,finishCost,expectedDraws:model.expectedDraws(plan.groups),
-      usefulOuts:model.usefulOuts(plan.groups),score:plan.score*(plan.missing+1)/(finishCost+1),immediateWin:false};
+      usefulOuts:model.usefulOuts(plan.groups),score:profile==='conservative' ? Math.sqrt(plan.goal.points)/(finishCost+1) : plan.score*(plan.missing+1)/(finishCost+1),immediateWin:false};
     if (!plan.missing) assessment.immediateWin = completeRemaining(plan.groups) <= (knowledge.hasDrawn ? 1 : 0);
     return assessment;
   });
 }
 
-export function smartBestGoal(player: Player, knowledge: AIKnowledge, cards?: Card[], tactical = true): GoalAssessment | null {
-  const plans = smartAssessGoals(player,knowledge,cards);
+export function smartBestGoal(player: Player, knowledge: AIKnowledge, cards?: Card[], tactical = true, profile: AIRiskProfile = 'aggressive'): GoalAssessment | null {
+  const plans = smartAssessGoals(player,knowledge,cards,profile);
   plans.sort((a,b)=> (tactical ? Number(b.immediateWin)-Number(a.immediateWin) : 0)
+    || (profile==='conservative' ? Number(b.missing===0)-Number(a.missing===0) : 0)
     || b.score-a.score || a.missing-b.missing || Number(b.goal===player.goal)-Number(a.goal===player.goal));
   const best = plans[0]; if (!best) return null;
   const current = plans.find(p=>p.goal===player.goal);
@@ -59,8 +62,8 @@ export function smartBestGoal(player: Player, knowledge: AIKnowledge, cards?: Ca
   return best;
 }
 
-export function smartSelectGoal(player: Player, knowledge: AIKnowledge): GoalAssessment | null {
-  const best = smartBestGoal(player,knowledge);
+export function smartSelectGoal(player: Player, knowledge: AIKnowledge, profile: AIRiskProfile = 'aggressive'): GoalAssessment | null {
+  const best = smartBestGoal(player,knowledge,undefined,true,profile);
   if (best && best.goal !== player.goal) {
     for (const f of player.goal?.formations ?? []) { player.takeCards(f.cards); f.cards=[]; }
     player.goal=best.goal; player.refreshCanLayDown();
@@ -68,28 +71,28 @@ export function smartSelectGoal(player: Player, knowledge: AIKnowledge): GoalAss
   return best;
 }
 
-export function smartDiscard(player: Player, knowledge: AIKnowledge, allocation?: GoalAssessment | null): Card {
+export function smartDiscard(player: Player, knowledge: AIKnowledge, allocation?: GoalAssessment | null, profile: AIRiskProfile = 'aggressive'): Card {
   if (player.laidDown) return lowestCard(getCardScores(player));
   if (!player.hand.length) throw Error('Empty hand in AI discard');
   const pool=availableAICards(player);
-  const plan=allocation ?? smartBestGoal(player,knowledge,pool,false);
+  const plan=allocation ?? smartBestGoal(player,knowledge,pool,false,profile);
   if (!plan) throw Error('No unfinished AI goal');
   const used=new Set(plan.groups.flatMap(g=>g.cards));
   const unused=player.hand.filter(c=>!used.has(c));
   const natural=unused.find(c=>!c.isWild); if (natural) return natural;
   let choice=unused[0] ?? player.hand[0];
-  let best=unused.length ? plan : smartBestGoal(player,knowledge,pool.filter(c=>c!==choice),false);
+  let best=unused.length ? plan : smartBestGoal(player,knowledge,pool.filter(c=>c!==choice),false,profile);
   for (const card of player.hand) {
     if (card===choice || (unused.length && card.isWild)) continue;
-    const candidate=smartBestGoal(player,knowledge,pool.filter(c=>c!==card),false);
-    if (candidate && (!best || candidate.score>best.score || (candidate.score===best.score && choice.isWild && !card.isWild))) {
+    const candidate=smartBestGoal(player,knowledge,pool.filter(c=>c!==card),false,profile);
+    if (candidate && (!best || betterFitness(candidate,best,profile) || (candidate.score===best.score && choice.isWild && !card.isWild))) {
       choice=card;best=candidate;
     }
   }
   return choice;
 }
 
-export function smartPickup(player: Player, knowledge: AIKnowledge, discard?: Card, allocation?: GoalAssessment | null): boolean {
+export function smartPickup(player: Player, knowledge: AIKnowledge, discard?: Card, allocation?: GoalAssessment | null, profile: AIRiskProfile = 'aggressive'): boolean {
   if (!discard) return false;
   if (player.laidDown) {
     const table=ownTableFirst(player,knowledge.table);
@@ -97,14 +100,23 @@ export function smartPickup(player: Player, knowledge: AIKnowledge, discard?: Ca
     const after=planTableAdds([...player.hand,discard],table);
     return after.remaining.length<=before.remaining.length;
   }
-  const before=allocation ?? smartBestGoal(player,knowledge);
+  const before=allocation ?? smartBestGoal(player,knowledge,undefined,true,profile);
   const pool=[...player.hand,discard,...(player.goal?.formations.flatMap(f=>f.cards)??[])];
   const afterKnowledge={...knowledge,hasDrawn:true};
-  const after=smartBestGoal(player,afterKnowledge,pool);
+  const after=smartBestGoal(player,afterKnowledge,pool,true,profile);
   if (!before || !after) return false;
   if (after.immediateWin) return true;
   const used=new Set(after.groups.flatMap(g=>g.cards));
-  if (!used.has(discard) || after.score<=before.score) return false;
+  if (!used.has(discard) || !betterFitness(after,before,profile)) return false;
   if (pool.some(c=>c!==discard && !used.has(c))) return true;
-  return pool.some(card=>card!==discard && (smartBestGoal(player,afterKnowledge,pool.filter(c=>c!==card),false)?.score??0)>before.score);
+  return pool.some(card=>{
+    if(card===discard)return false;
+    const retained=smartBestGoal(player,afterKnowledge,pool.filter(c=>c!==card),false,profile);
+    return retained!==null && betterFitness(retained,before,profile);
+  });
+}
+
+function betterFitness(candidate: GoalAssessment, current: GoalAssessment, profile: AIRiskProfile): boolean {
+  if(profile==='conservative' && (candidate.missing===0)!==(current.missing===0)) return candidate.missing===0;
+  return candidate.score>current.score;
 }

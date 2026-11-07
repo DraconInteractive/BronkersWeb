@@ -18,3 +18,14 @@ export const improvedAI: AIPolicy = {
   selectGoal:smartSelectGoal,pickup:smartPickup,discard:smartDiscard,
   table:(player,knowledge)=>planTableAdds(player.hand,ownTableFirst(player,knowledge.table)),
 };
+
+
+// The deployed policy stays aggressive. The conservative policy is an explicit
+// experiment option; it shares legal move/search capabilities with the control.
+export const aggressiveAI = improvedAI;
+export const conservativeAI: AIPolicy = {
+  ...improvedAI,id:'conservative-banking-v1',
+  selectGoal:(player,knowledge)=>smartSelectGoal(player,knowledge,'conservative'),
+  pickup:(player,knowledge,discard,plan)=>smartPickup(player,knowledge,discard,plan,'conservative'),
+  discard:(player,knowledge,plan)=>smartDiscard(player,knowledge,plan,'conservative'),
+};
