@@ -1,0 +1,206 @@
+{
+  "config": {
+    "rounds": 10,
+    "policies": [
+      "match-and-goal-planning-v1",
+      "public-pressure-and-denial-v1"
+    ],
+    "scoring": "Goal points banked immediately on laydown, once per player/round; no round-win bonus. Bombed players score zero for that round.",
+    "goals": "Each goal usable once per player per match; goal sheets reset between matches.",
+    "starters": "Seat 0 improved, seat 1 public-aware; initial starter alternates by match; round starter alternates within each match.",
+    "conservative": "Ready goals first; otherwise sqrt(reward)/(availability distance+1), without aggressive exit-card cost. Shared immediate-win override and move search.",
+    "aggressive": "Preserved aggressive control: reward^1.65 (3R multiplier 1.05)/(availability distance+0.35*exitCards+1).",
+    "engineMode": "points",
+    "engineScoreAudit": true,
+    "improved": "Bounded score-aware risk and remaining-goal opportunity values, plus public bombing pressure and discard denial. Uses public scores/round budget; no hidden cards or private opponent progress.",
+    "public-aware": "Previous public-pressure-and-denial-v1 control, without match planning.",
+    "policyNames": [
+      "improved",
+      "public-aware"
+    ],
+    "count": 200,
+    "seed": 7201,
+    "workers": 3,
+    "maxRoundTurns": 500,
+    "sourceRevision": "d16ca30cd05c6bc8a6c9be58fcb464335b394cd4",
+    "sourceDirty": false
+  },
+  "finished": "2026-11-07T04:33:13.479Z",
+  "elapsedSeconds": 307.229157868,
+  "summary": {
+    "matches": 200,
+    "completed": 200,
+    "capped": 0,
+    "rounds": 2000,
+    "ties": 15,
+    "meanRoundTurns": 15.7315,
+    "policies": [
+      {
+        "policy": "improved",
+        "matchWins": 93,
+        "meanScore": 46.88,
+        "roundWins": 1007,
+        "bombsInflicted": 462,
+        "bombsSuffered": 513,
+        "laidDown": 1487,
+        "meanOwnTurnsToLayDown": 6.342972427706792,
+        "winsByInitialStarter": [
+          {
+            "starter": 0,
+            "matches": 100,
+            "wins": 52
+          },
+          {
+            "starter": 1,
+            "matches": 100,
+            "wins": 41
+          }
+        ]
+      },
+      {
+        "policy": "public-aware",
+        "matchWins": 92,
+        "meanScore": 47.17,
+        "roundWins": 993,
+        "bombsInflicted": 513,
+        "bombsSuffered": 462,
+        "laidDown": 1538,
+        "meanOwnTurnsToLayDown": 6.228868660598179,
+        "winsByInitialStarter": [
+          {
+            "starter": 0,
+            "matches": 100,
+            "wins": 39
+          },
+          {
+            "starter": 1,
+            "matches": 100,
+            "wins": 53
+          }
+        ]
+      }
+    ],
+    "goals": [
+      {
+        "goal": "2S",
+        "points": 1,
+        "counts": [
+          86,
+          98
+        ],
+        "ownTurns": [
+          387,
+          538
+        ]
+      },
+      {
+        "goal": "3S",
+        "points": 1,
+        "counts": [
+          55,
+          67
+        ],
+        "ownTurns": [
+          252,
+          410
+        ]
+      },
+      {
+        "goal": "1S 1R",
+        "points": 3,
+        "counts": [
+          155,
+          170
+        ],
+        "ownTurns": [
+          799,
+          780
+        ]
+      },
+      {
+        "goal": "2R",
+        "points": 3,
+        "counts": [
+          85,
+          103
+        ],
+        "ownTurns": [
+          624,
+          712
+        ]
+      },
+      {
+        "goal": "2S 1R",
+        "points": 5,
+        "counts": [
+          182,
+          193
+        ],
+        "ownTurns": [
+          1059,
+          1079
+        ]
+      },
+      {
+        "goal": "4S",
+        "points": 5,
+        "counts": [
+          169,
+          159
+        ],
+        "ownTurns": [
+          816,
+          795
+        ]
+      },
+      {
+        "goal": "1S 2R",
+        "points": 8,
+        "counts": [
+          195,
+          196
+        ],
+        "ownTurns": [
+          1085,
+          1123
+        ]
+      },
+      {
+        "goal": "3S 1R",
+        "points": 8,
+        "counts": [
+          200,
+          199
+        ],
+        "ownTurns": [
+          1162,
+          1156
+        ]
+      },
+      {
+        "goal": "2S 2R",
+        "points": 10,
+        "counts": [
+          195,
+          187
+        ],
+        "ownTurns": [
+          1688,
+          1547
+        ]
+      },
+      {
+        "goal": "3R",
+        "points": 10,
+        "counts": [
+          165,
+          166
+        ],
+        "ownTurns": [
+          1560,
+          1440
+        ]
+      }
+    ]
+  }
+}

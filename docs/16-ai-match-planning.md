@@ -77,3 +77,13 @@ after each turn. The controls' saved games are replayed in unit tests.
 
 The independent-first-round runner still uses classic mode and therefore does
 not evaluate match planning. Use the banking runner for this comparison.
+
+## Recorded comparison
+
+[The 200-match report](../reports/ai/match-planning-v-public-aware-200.md) records
+2,000 completed rounds with no caps. New won 93 matches, previous won 92, and 15
+were tied. Mean scores were 46.880 versus 47.170. The paired mean difference was
+−0.290 points, with an approximate 95% interval of −1.535 to +0.955: no clear
+strength gain in this batch. Both requested features are implemented, but their
+heuristics need further evaluation. The report also breaks down results by
+round-start score position. No weights were changed after the final comparison.
