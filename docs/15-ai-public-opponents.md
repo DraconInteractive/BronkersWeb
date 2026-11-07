@@ -61,3 +61,13 @@ preserved aggressive control, so the earlier experiment can still be reproduced.
 
 For independent first-round comparisons, the existing runner now also accepts
 `--opponent aggressive`. Historical JSON/CSV reports remain unchanged.
+
+## Recorded check
+
+[The 200-match report](../reports/ai/public-awareness-v-aggressive-200.md) records
+2,000 completed rounds with no caps. Revised won 88 matches, previous won 100,
+and 12 were tied. Mean points were 46.510 versus 46.215; bombing rates were 24.90%
+versus 33.70%. This shows the intended defensive behaviour, but no clear overall
+match-winning improvement. The two requested features were evaluated together;
+the sample does not isolate their individual effects. No weights were retuned
+following the result. The prior control remains available for further testing.
